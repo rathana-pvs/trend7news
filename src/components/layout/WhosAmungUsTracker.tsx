@@ -8,21 +8,21 @@ export function WhosAmungUsTracker() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      let currentTitle = document.title ? document.title.trim() : ''
+      const h1Element = document.querySelector('h1')
+      let headlineTitle = ''
 
-      // If document.title is empty, numeric, or fallback string, extract real title from H1 tag
-      const isNumericOrId = /^\d+$/.test(currentTitle) || currentTitle.startsWith('1786')
-      if (!currentTitle || currentTitle === 'Untitled Page' || currentTitle === 'Article Not Found' || isNumericOrId) {
-        const h1Element = document.querySelector('h1')
-        if (h1Element && h1Element.textContent && h1Element.textContent.trim().length > 3) {
-          currentTitle = `${h1Element.textContent.trim()} — Trend7News`
-        } else {
-          currentTitle = 'Trend7News — Real-time Trends & Independent News'
+      if (h1Element && h1Element.textContent && h1Element.textContent.trim().length > 3) {
+        headlineTitle = h1Element.textContent.trim()
+        document.title = `${headlineTitle} — Trend7News`
+      } else {
+        let currentTitle = document.title ? document.title.trim() : ''
+        const isRawId = /^\d+$/.test(currentTitle) || currentTitle.includes('1786') || currentTitle === 'Untitled Page' || currentTitle === 'Article Not Found'
+        if (!currentTitle || isRawId) {
+          document.title = 'Trend7News — Real-time Trends & Independent News'
         }
-        document.title = currentTitle
       }
 
-      // Remove previous script instance if exists
+      // Remove existing script instance if present
       const oldScript = document.getElementById('whos-amung-us-ping-script')
       if (oldScript) {
         oldScript.remove()
@@ -34,7 +34,7 @@ export function WhosAmungUsTracker() {
       script.src = `https://whos.amung.us/pingjs/?k=trend7news&t=${Date.now()}`
       script.async = true
       document.body.appendChild(script)
-    }, 400)
+    }, 500)
 
     return () => clearTimeout(timer)
   }, [pathname])
