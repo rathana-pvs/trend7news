@@ -32,8 +32,6 @@ export const metadata: Metadata = {
   },
 }
 
-import { WhosAmungUsTracker } from '@/components/layout/WhosAmungUsTracker'
-
 export default async function FrontendLayout({
   children,
 }: {
@@ -43,7 +41,6 @@ export default async function FrontendLayout({
     <html lang="en">
       <body>
         <NavigationProgress />
-        <WhosAmungUsTracker />
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <Header />
           <main style={{ flex: 1 }}>
