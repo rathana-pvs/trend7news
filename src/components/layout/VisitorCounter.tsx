@@ -8,37 +8,40 @@ export function VisitorCounter() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    if (containerRef.current) {
-      containerRef.current.innerHTML = ''
+    const container = containerRef.current
+    if (!container) return
+
+    // Append d.js and pingjs tracker scripts once mounted
+    const existingDScript = document.getElementById('_wau_d_script')
+    if (!existingDScript) {
+      const dScript = document.createElement('script')
+      dScript.id = '_wau_d_script'
+      dScript.async = true
+      dScript.src = 'https://waust.at/d.js'
+      document.body.appendChild(dScript)
     }
 
-    // 1. Create whos.amung.us configuration script
-    const configScript = document.createElement('script')
-    configScript.id = '_wauyh7'
-    configScript.innerHTML = 'var _wau = _wau || []; _wau.push(["dynamic", "ztww1qct06", "yh7", "c4302bffffff", "small"]);'
-
-    // 2. Create whos.amung.us execution script (with explicit https protocol)
-    const execScript = document.createElement('script')
-    execScript.async = true
-    execScript.src = 'https://waust.at/d.js'
-
-    // 3. Create whos.amung.us ping tracker script
-    const pingScript = document.createElement('script')
-    pingScript.async = true
-    pingScript.src = 'https://whos.amung.us/pingjs/?k=ztww1qct06'
-
-    if (containerRef.current) {
-      containerRef.current.appendChild(configScript)
-      containerRef.current.appendChild(execScript)
-      containerRef.current.appendChild(pingScript)
+    const existingPingScript = document.getElementById('_wau_ping_script')
+    if (!existingPingScript) {
+      const pingScript = document.createElement('script')
+      pingScript.id = '_wau_ping_script'
+      pingScript.async = true
+      pingScript.src = 'https://whos.amung.us/pingjs/?k=ztww1qct06'
+      document.body.appendChild(pingScript)
     }
   }, [])
 
   return (
     <div 
       ref={containerRef} 
-      className="mt-4 flex items-center justify-start opacity-80 hover:opacity-100 transition-opacity duration-300"
-      style={{ minHeight: '30px' }}
-    />
+      className="mt-4 flex items-center justify-start opacity-80 hover:opacity-100 transition-opacity duration-300 min-h-[30px]"
+    >
+      <script
+        id="_wauyh7"
+        dangerouslySetInnerHTML={{
+          __html: 'var _wau = _wau || []; _wau.push(["dynamic", "ztww1qct06", "yh7", "c4302bffffff", "small"]);',
+        }}
+      />
+    </div>
   )
 }
