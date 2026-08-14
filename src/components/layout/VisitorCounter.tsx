@@ -20,17 +20,13 @@ export function VisitorCounter() {
         href="https://whos.amung.us/stats/trend7news/"
         target="_blank"
         rel="noopener noreferrer"
-        title="whos.amung.us live stats"
-        className="inline-flex items-center hover:opacity-80 transition-opacity"
+        title="View live reader analytics"
+        className="inline-flex items-center gap-1 text-xs font-mono text-[#d0021b] bg-red-50 border border-red-200 px-2.5 py-1.5 rounded hover:bg-red-100 transition-colors"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://whos.amung.us/swidget/trend7news.png"
-          alt="whos.amung.us live counter"
-          width="80"
-          height="15"
-          className="border-0"
-        />
+        <span className="font-bold">Live Stats</span>
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
       </a>
     </div>
   )
