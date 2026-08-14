@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { lexicalEditor, BlocksFeature } from '@payloadcms/richtext-lexical'
 import { VideoEmbed } from '../blocks/VideoEmbed'
 import { slugify } from '../lib/utils'
-import { revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 export const Articles: CollectionConfig = {
   slug: 'articles',
@@ -59,10 +59,17 @@ export const Articles: CollectionConfig = {
       async ({ doc }) => {
         try {
           revalidateTag('articles')
+          if (doc.slug) {
+            revalidatePath(`/article/${doc.slug}`)
+          }
+          revalidatePath('/')
+          revalidatePath('/search')
+
           if (doc.status === 'published' && doc.slug) {
             const envUrl = process.env.NEXT_PUBLIC_SITE_URL
             const siteUrl = envUrl && !envUrl.includes('placeholder.com') ? envUrl : 'http://localhost:3000'
 
+            // Background HTTP ping to warm edge cache immediately
             fetch(`${siteUrl}/article/${doc.slug}`, { cache: 'no-store' }).catch(() => {})
             fetch(`${siteUrl}/`, { cache: 'no-store' }).catch(() => {})
           }
@@ -70,6 +77,21 @@ export const Articles: CollectionConfig = {
           // Ignore revalidation errors during seeding/CLI
         }
         
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ doc }) => {
+        try {
+          revalidateTag('articles')
+          if (doc?.slug) {
+            revalidatePath(`/article/${doc.slug}`)
+          }
+          revalidatePath('/')
+          revalidatePath('/search')
+        } catch (e) {
+          // Ignore
+        }
         return doc
       },
     ],
