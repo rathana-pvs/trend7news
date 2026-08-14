@@ -57,9 +57,9 @@ export const Media: CollectionConfig = {
         if (doc.source === 'external' && doc.externalUrl) {
           doc.url = doc.externalUrl
         } else if (doc.url && doc.url.startsWith('/api/media/file/')) {
-          doc.url = `${SITE_URL}/media/${doc.url.replace('/api/media/file/', '')}`
-        } else if (doc.url && doc.url.startsWith('/media/')) {
-          doc.url = `${SITE_URL}${doc.url}`
+          doc.url = `/media/${doc.url.replace('/api/media/file/', '')}`
+        } else if (doc.filename) {
+          doc.url = `/media/${doc.filename}`
         }
         return doc
       },

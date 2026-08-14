@@ -8,9 +8,13 @@ const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL && !process.env.NEXT_PUBLIC_S
 
 function normalizeImageUrl(url: string | undefined | null): string | undefined {
   if (!url) return undefined
+  if (url.includes('2.25.107.30') || url.includes('trend7news.com')) {
+    const filename = url.split('/').pop()
+    if (filename) return `/media/${filename}`
+  }
+  if (url.startsWith('/api/media/file/')) return `/media/${url.replace('/api/media/file/', '')}`
+  if (url.startsWith('/media/')) return url
   if (url.startsWith('http')) return url
-  if (url.startsWith('/api/media/file/')) return `${SITE_URL}/media/${url.replace('/api/media/file/', '')}`
-  if (url.startsWith('/media/')) return `${SITE_URL}${url}`
   return url
 }
 
