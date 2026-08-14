@@ -14,8 +14,8 @@ export function VisitorCounter() {
 
     // 1. Create whos.amung.us configuration script
     const configScript = document.createElement('script')
-    configScript.id = '_wau_trend7'
-    configScript.innerHTML = 'var _wau = _wau || []; _wau.push(["classic", "trend7news", "0"]);'
+    configScript.id = '_wauyh7'
+    configScript.innerHTML = 'var _wau = _wau || []; _wau.push(["dynamic", "ztww1qct06", "yh7", "c4302bffffff", "small"]);'
 
     // 2. Create whos.amung.us execution script
     const execScript = document.createElement('script')
