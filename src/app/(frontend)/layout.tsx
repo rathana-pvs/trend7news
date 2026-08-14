@@ -51,6 +51,10 @@ export default async function FrontendLayout({
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
+        <Script
+          src="https://jsc.adskeeper.com/site/1108243.js"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   )

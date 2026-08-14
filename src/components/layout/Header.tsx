@@ -33,9 +33,63 @@ export function Header() {
 
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
 
+  // Minimal Article Header for News Pages (/article/[slug])
+  if (pathname.startsWith('/article/')) {
+    return (
+      <header className="w-full bg-[#0a0a0a] text-white z-50 sticky top-0 border-b border-white/10 shadow-md">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+          
+          {/* Left: Back to Home Button */}
+          <div className="w-1/3 flex items-center">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all text-xs font-mono font-bold tracking-wider uppercase group"
+            >
+              <svg
+                className="w-4 h-4 text-gray-300 transition-transform duration-200 group-hover:-translate-x-0.5 group-hover:text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Back</span>
+            </Link>
+          </div>
+
+          {/* Center: Brand Logo */}
+          <div className="flex-1 flex justify-center">
+            <Link href="/" className="flex items-center gap-1">
+              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white">
+                TREND<span className="text-[#d0021b]">7</span>NEWS
+              </span>
+            </Link>
+          </div>
+
+          {/* Right: Search Action */}
+          <div className="w-1/3 flex items-center justify-end">
+            <Link
+              href="/search"
+              className="w-9 h-9 rounded flex items-center justify-center text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label={dict.search}
+            >
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+            </Link>
+          </div>
+
+        </div>
+      </header>
+    )
+  }
+
+  // Standard Header for non-article pages
   return (
     <>
-      {/* Top Black Header (AP News Style) */}
+      {/* Top Black Header */}
       <header className="w-full bg-[#0a0a0a] text-white z-50">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between h-16 border-b border-white/10">
           
@@ -79,26 +133,24 @@ export function Header() {
           </div>
         </div>
 
-        {/* Sub-Header Topic Navigation Bar (Hidden on article/news pages) */}
-        {!pathname.startsWith('/article/') && (
-          <div className="bg-[#121212] border-b border-white/10">
-            <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-              <nav className="flex items-center gap-6 overflow-x-auto py-2.5 text-xs font-mono tracking-wider uppercase scrollbar-none whitespace-nowrap">
-                {TOPICS.map((topic) => (
-                  <Link
-                    key={topic.name}
-                    href={topic.href}
-                    className={`transition-colors py-1 hover:text-[#d0021b] ${
-                      isActive(topic.href) ? 'text-[#d0021b] font-bold border-b-2 border-[#d0021b]' : 'text-gray-300'
-                    }`}
-                  >
-                    {topic.name}
-                  </Link>
-                ))}
-              </nav>
-            </div>
+        {/* Sub-Header Topic Navigation Bar */}
+        <div className="bg-[#121212] border-b border-white/10">
+          <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
+            <nav className="flex items-center gap-6 overflow-x-auto py-2.5 text-xs font-mono tracking-wider uppercase scrollbar-none whitespace-nowrap">
+              {TOPICS.map((topic) => (
+                <Link
+                  key={topic.name}
+                  href={topic.href}
+                  className={`transition-colors py-1 hover:text-[#d0021b] ${
+                    isActive(topic.href) ? 'text-[#d0021b] font-bold border-b-2 border-[#d0021b]' : 'text-gray-300'
+                  }`}
+                >
+                  {topic.name}
+                </Link>
+              ))}
+            </nav>
           </div>
-        )}
+        </div>
       </header>
 
       {/* Mobile Nav Overlay */}
