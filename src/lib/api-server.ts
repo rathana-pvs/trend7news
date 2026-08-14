@@ -95,12 +95,44 @@ const cachedGetArticle = unstable_cache(
   async (slug: string): Promise<Article | null> => {
     try {
       const payload = await getPayloadClient()
-      const result = await payload.find({
+
+      // 1. Search by slug
+      let result = await payload.find({
         collection: 'articles',
         where: { slug: { equals: slug } },
         limit: 1,
         depth: 2,
       })
+
+      // 2. Search by numeric ID if slug is numeric
+      if (result.docs.length === 0 && !isNaN(Number(slug))) {
+        result = await payload.find({
+          collection: 'articles',
+          where: { id: { equals: Number(slug) } },
+          limit: 1,
+          depth: 2,
+        })
+      }
+
+      // 3. Search by share-links key if not found
+      if (result.docs.length === 0) {
+        const shareLinkResult = await payload.find({
+          collection: 'share-links' as any,
+          where: { key: { equals: slug } },
+          limit: 1,
+          depth: 2,
+        })
+        const shareLink = shareLinkResult.docs[0] as any
+        if (shareLink && shareLink.article) {
+          const articleDoc = typeof shareLink.article === 'object' 
+            ? shareLink.article 
+            : await payload.findByID({ collection: 'articles', id: shareLink.article, depth: 2 })
+          if (articleDoc) {
+            result.docs = [articleDoc as any]
+          }
+        }
+      }
+
       const article = (result.docs[0] as unknown as any) || null
       if (article && article.coverImage && typeof article.coverImage === 'object') {
         article.coverImage.url = normalizeImageUrl(article.coverImage.url)
