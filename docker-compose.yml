@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: trend7news
+      POSTGRES_PASSWORD: trend7news123
+      POSTGRES_DB: trend7news
+    ports:
+      - '5434:5432'
+    volumes:
+      - trend7news_db_data:/var/lib/postgresql/data
+
+volumes:
+  trend7news_db_data:
