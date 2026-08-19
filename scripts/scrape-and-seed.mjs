@@ -115,43 +115,9 @@ async function main() {
       imgUrl = `https://images.unsplash.com/photo-1585829365295-ab7cd400c167?q=80&w=2000&auto=format&fit=crop`
     }
 
-    // Upload image to local media collection
+    // Create external media collection entry
     try {
-      console.log(`  🖼️ Uploading media image from: ${imgUrl.substring(0, 60)}...`)
-      const imgFetch = await fetch(imgUrl)
-      if (imgFetch.ok) {
-        const arrayBuf = await imgFetch.arrayBuffer()
-        const mimeType = imgFetch.headers.get('content-type') || 'image/jpeg'
-        const ext = mimeType.includes('png') ? 'png' : mimeType.includes('webp') ? 'webp' : 'jpg'
-        const filename = `scraped-${Date.now()}-${i}.${ext}`
-
-        const formData = new FormData()
-        formData.append('file', new Blob([arrayBuf], { type: mimeType }), filename)
-        formData.append('_payload', JSON.stringify({
-          alt: pfArticle.title,
-          caption: pfArticle.title,
-        }))
-
-        const mediaRes = await fetch(`${LOCAL_API}/media`, {
-          method: 'POST',
-          headers: authHeaders,
-          body: formData,
-        })
-
-        if (mediaRes.ok) {
-          const mediaData = await mediaRes.json()
-          mediaId = mediaData.doc?.id || mediaData.id
-          console.log(`  ✅ Media created with ID: ${mediaId}`)
-        } else {
-          console.error(`  ⚠️ Media upload failed: ${await mediaRes.text()}`)
-        }
-      }
-    } catch (err) {
-      console.warn(`  ⚠️ Could not download/upload image: ${err.message}`)
-    }
-
-    // Fallback external media
-    if (!mediaId && imgUrl) {
+      console.log(`  🖼️ Setting up media image from: ${imgUrl.substring(0, 60)}...`)
       const extRes = await fetch(`${LOCAL_API}/media`, {
         method: 'POST',
         headers: {
@@ -160,6 +126,7 @@ async function main() {
         },
         body: JSON.stringify({
           alt: pfArticle.title,
+          caption: pfArticle.title,
           source: 'external',
           externalUrl: imgUrl,
         }),
@@ -167,7 +134,12 @@ async function main() {
       if (extRes.ok) {
         const extData = await extRes.json()
         mediaId = extData.doc?.id || extData.id
+        console.log(`  ✅ Media created with ID: ${mediaId}`)
+      } else {
+        console.error(`  ⚠️ Media creation failed: ${await extRes.text()}`)
       }
+    } catch (err) {
+      console.warn(`  ⚠️ Could not create media: ${err.message}`)
     }
 
     // Post Article via HTTP REST API

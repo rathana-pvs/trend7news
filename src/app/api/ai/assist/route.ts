@@ -620,7 +620,7 @@ const googleAI = createGoogleGenerativeAI({
 })
 
 const PRIMARY_MODEL_ID = 'gemini-3.5-flash-lite'
-const FALLBACK_MODEL_ID = 'gemini-2.5-flash'
+const FALLBACK_MODEL_ID = 'gemini-3.5-flash-lite'
 
 const primaryModel = googleAI(PRIMARY_MODEL_ID)
 const fallbackModel = googleAI(FALLBACK_MODEL_ID)
@@ -630,7 +630,6 @@ export async function GET(req: NextRequest) {
 
   for (const [name, model] of [
     [PRIMARY_MODEL_ID, primaryModel],
-    [FALLBACK_MODEL_ID, fallbackModel],
   ] as [string, any][]) {
     try {
       const res = await generateText({
@@ -673,7 +672,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { action, title, content, url } = await req.json()
+    const { action, title, content, url, customPrompt } = await req.json()
 
     if (!action) {
       return NextResponse.json({ error: 'Action is required' }, { status: 400 })
@@ -689,96 +688,34 @@ export async function POST(req: NextRequest) {
 
       if (result.scrapedImageUrl) {
         try {
-          const imageRes = await fetch(result.scrapedImageUrl, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+          const mediaDoc = await payload.create({
+            collection: 'media',
+            data: {
+              alt: result.title || 'Scraped Image',
+              source: 'external',
+              externalUrl: result.scrapedImageUrl,
+            },
           })
-          if (imageRes.ok) {
-            const arrayBuffer = await imageRes.arrayBuffer()
-            const buffer = Buffer.from(arrayBuffer)
-            const contentType = imageRes.headers.get('content-type') || 'image/jpeg'
-            let ext = contentType.split('/')[1] || 'jpg'
-            ext = ext.split(';')[0].trim()
-            const filename = `scraped-${Date.now()}.${ext}`
-            
-            const mediaDoc = await payload.create({
-              collection: 'media',
-              data: {
-                alt: result.title || 'Scraped Image',
-              },
-              file: {
-                data: buffer,
-                name: filename,
-                mimetype: contentType,
-                size: buffer.length,
-              }
-            })
-            result.coverImage = mediaDoc.id
-          } else {
-            throw new Error(`Failed to fetch cover image: Status ${imageRes.status}`)
-          }
+          result.coverImage = mediaDoc.id
         } catch (imgErr) {
-          console.error('Failed to download scraped cover image, trying external fallback:', imgErr)
-          try {
-            const mediaDoc = await payload.create({
-              collection: 'media',
-              data: {
-                alt: result.title || 'Scraped Image',
-                source: 'external',
-                externalUrl: result.scrapedImageUrl
-              }
-            })
-            result.coverImage = mediaDoc.id
-          } catch (extErr) {
-            console.error('Failed to create external cover image fallback:', extErr)
-          }
+          console.error('Failed to create external cover image:', imgErr)
         }
       }
 
       for (const block of blocks) {
         if (block.type === 'image' && block.src) {
           try {
-            const imageRes = await fetch(block.src, {
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+            const mediaDoc = await payload.create({
+              collection: 'media',
+              data: {
+                alt: block.alt || result.title || 'Scraped Inline Image',
+                source: 'external',
+                externalUrl: block.src,
+              },
             })
-            if (imageRes.ok) {
-              const arrayBuffer = await imageRes.arrayBuffer()
-              const buffer = Buffer.from(arrayBuffer)
-              const contentType = imageRes.headers.get('content-type') || 'image/jpeg'
-              let ext = contentType.split('/')[1] || 'jpg'
-              ext = ext.split(';')[0].trim()
-              const filename = `scraped-inline-${Date.now()}-${Math.floor(Math.random() * 1000)}.${ext}`
-              
-              const mediaDoc = await payload.create({
-                collection: 'media',
-                data: {
-                  alt: block.alt || result.title || 'Scraped Inline Image',
-                },
-                file: {
-                  data: buffer,
-                  name: filename,
-                  mimetype: contentType,
-                  size: buffer.length,
-                }
-              })
-              block.mediaId = mediaDoc.id
-            } else {
-              throw new Error(`Failed to fetch inline image: Status ${imageRes.status}`)
-            }
+            block.mediaId = mediaDoc.id
           } catch (imgErr) {
-            console.error('Failed to download inline image, trying external fallback:', block.src, imgErr)
-            try {
-              const mediaDoc = await payload.create({
-                collection: 'media',
-                data: {
-                  alt: block.alt || result.title || 'Scraped Inline Image',
-                  source: 'external',
-                  externalUrl: block.src
-                }
-              })
-              block.mediaId = mediaDoc.id
-            } catch (extErr) {
-              console.error('Failed to create external inline image fallback:', extErr)
-            }
+            console.error('Failed to create external inline image:', block.src, imgErr)
           }
         }
 
@@ -880,28 +817,34 @@ Return valid JSON with exact keys: { "excerpt", "content", "tags", "metaTitle", 
       return NextResponse.json({ success: true, data: enforced })
     }
 
-    if (!title && !content) {
-      return NextResponse.json({ error: 'Title or content is required for AI generation' }, { status: 400 })
+    if (!title && !content && !customPrompt) {
+      return NextResponse.json({ error: 'Title, content, or prompt instructions are required for AI generation' }, { status: 400 })
     }
+
+    const contextNotes = [
+      content ? `Article Notes/Context: "${content}"` : '',
+      customPrompt ? `Editor Instructions/Prompt: "${customPrompt}"` : ''
+    ].filter(Boolean).join('\n')
 
     let prompt = ''
     if (action === 'full') {
-      prompt = `Given the article title "${title}"${content ? ` and notes: "${content}"` : ''}, generate a complete summary news article adhering to these rules:
+      prompt = `Given the article title "${title || 'Untitled'}"${contextNotes ? ` and details:\n${contextNotes}` : ''}, generate a complete summary news article adhering to these rules:
+- "title": A polished, engaging title for the article (use given title if suitable or refine it).
 - "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
 - "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be between 120 and 140 words. Each paragraph MUST be at most 35 words long.
 - "tags": ["3-5 relevant lowercase tags"]
 - "metaTitle": SEO title strictly 50-60 characters ending with - Trend7News.
 - "metaDescription": SEO meta description strictly 100-150 characters.
 
-Return JSON with exact keys: { "excerpt", "content", "tags", "metaTitle", "metaDescription" }`
+Return JSON with exact keys: { "title", "excerpt", "content", "tags", "metaTitle", "metaDescription" }`
     } else if (action === 'content_only') {
-      prompt = `Given the article title "${title}"${content ? ` and notes: "${content}"` : ''}, generate the summary article content adhering to these rules:
+      prompt = `Given the article title "${title || 'Untitled'}"${contextNotes ? ` and details:\n${contextNotes}` : ''}, generate the summary article content adhering to these rules:
 - "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
 - "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be between 120 and 140 words. Each paragraph MUST be at most 35 words long.
 
 Return JSON with exact keys: { "excerpt", "content" }`
     } else if (action === 'seo_only') {
-      prompt = `Given the article title "${title}"${content ? ` and excerpt/content: "${content}"` : ''}, generate SEO metadata adhering to these rules:
+      prompt = `Given the article title "${title || 'Untitled'}"${contextNotes ? ` and details:\n${contextNotes}` : ''}, generate SEO metadata adhering to these rules:
 - "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
 - "tags": ["3-5 relevant lowercase tags"]
 - "metaTitle": SEO title strictly 50-60 characters ending with - Trend7News.

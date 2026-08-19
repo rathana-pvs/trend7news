@@ -6,27 +6,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'picsum.photos',
-      },
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'fastly.picsum.photos',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'plus.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.cloudinary.com',
+        hostname: '**',
       },
       {
         protocol: 'http',
@@ -38,39 +18,7 @@ const nextConfig = {
         hostname: '127.0.0.1',
         port: '3000',
       },
-      {
-        protocol: 'https',
-        hostname: 'dam.mediacorp.sg',
-      },
-      {
-        protocol: 'https',
-        hostname: 'media-cldnry.s-nbcnews.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'trend7news.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.trend7news.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.aljazeera.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'aljazeera.com',
-      },
     ],
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/media/file/:path*',
-        destination: '/media/:path*',
-      },
-    ]
   },
 }
 

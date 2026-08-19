@@ -10,6 +10,10 @@ export const Media: CollectionConfig = {
   upload: {
     staticDir: path.resolve(process.cwd(), 'public/media'),
     mimeTypes: ['image/*', 'video/*'],
+    adminThumbnail: ({ doc }: { doc: any }) => {
+      if (doc?.source === 'external' && doc?.externalUrl) return doc.externalUrl
+      return doc?.url || null
+    },
     imageSizes: [
       {
         name: 'thumbnail',
@@ -46,8 +50,6 @@ export const Media: CollectionConfig = {
       ({ data }) => {
         if (data.source === 'external' && data.externalUrl) {
           data.url = data.externalUrl
-        } else if (data.filename) {
-          data.url = `${SITE_URL}/media/${data.filename}`
         }
         return data
       },
@@ -56,10 +58,6 @@ export const Media: CollectionConfig = {
       ({ doc }) => {
         if (doc.source === 'external' && doc.externalUrl) {
           doc.url = doc.externalUrl
-        } else if (doc.url && doc.url.startsWith('/api/media/file/')) {
-          doc.url = `/media/${doc.url.replace('/api/media/file/', '')}`
-        } else if (doc.filename) {
-          doc.url = `/media/${doc.filename}`
         }
         return doc
       },
