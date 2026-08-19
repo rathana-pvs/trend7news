@@ -1062,7 +1062,7 @@ Return valid JSON with exact keys: { "excerpt", "content", "tags", "metaTitle", 
 
             if (contentStr) {
               const aiParagraphs = contentStr
-                .split(/\n\s*\n/)
+                .split(/\r?\n+/)
                 .map((p: string) => p.trim())
                 .filter((p: string) => Boolean(p) && !isJunkText(p))
 

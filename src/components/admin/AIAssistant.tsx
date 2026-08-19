@@ -74,12 +74,20 @@ export const AIAssistant: React.FC = () => {
     await callAI('scrape_direct')
   }
 
-  const convertTextToLexicalJson = (text: string) => {
-    if (!text) return null
-    const paragraphs = text
-      .split(/\n\s*\n/)
-      .map(p => p.trim())
-      .filter(Boolean)
+  const convertTextToLexicalJson = (textOrArray: string | string[]) => {
+    if (!textOrArray) return null
+    let paragraphs: string[] = []
+    if (Array.isArray(textOrArray)) {
+      paragraphs = textOrArray
+        .flatMap(item => (typeof item === 'string' ? item.split(/\r?\n+/) : []))
+        .map(p => p.trim())
+        .filter(Boolean)
+    } else if (typeof textOrArray === 'string') {
+      paragraphs = textOrArray
+        .split(/\r?\n+/)
+        .map(p => p.trim())
+        .filter(Boolean)
+    }
 
     const children = paragraphs.map(paraText => ({
       type: 'paragraph',
