@@ -127,19 +127,20 @@ export const AIAssistant: React.FC = () => {
       if (cleanExcerpt.trim().toLowerCase().startsWith(prefix)) {
         cleanExcerpt = cleanExcerpt.trim().substring(result.title.length).replace(/^[\s:\-–—\.\,\!]+/, '').trim()
       }
-      dispatchFields({ type: 'UPDATE', path: 'excerpt', value: cleanExcerpt, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'excerpt', value: cleanExcerpt, initialValue: cleanExcerpt, valid: true })
     } else if (fieldName === 'tags' && Array.isArray(value)) {
-      dispatchFields({ type: 'UPDATE', path: 'tags', value: value.map((tag: string) => ({ tag })), valid: true })
+      const tagList = value.map((tag: string) => ({ tag }))
+      dispatchFields({ type: 'UPDATE', path: 'tags', value: tagList, initialValue: tagList, valid: true })
     } else if (fieldName === 'metaTitle') {
-      dispatchFields({ type: 'UPDATE', path: 'og.metaTitle', value, valid: true })
-      dispatchFields({ type: 'UPDATE', path: 'meta.title', value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'og.metaTitle', value, initialValue: value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'meta.title', value, initialValue: value, valid: true })
     } else if (fieldName === 'metaDescription') {
-      dispatchFields({ type: 'UPDATE', path: 'og.metaDescription', value, valid: true })
-      dispatchFields({ type: 'UPDATE', path: 'meta.description', value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'og.metaDescription', value, initialValue: value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'meta.description', value, initialValue: value, valid: true })
     } else if (fieldName === 'coverImage') {
-      dispatchFields({ type: 'UPDATE', path: 'coverImage', value, valid: true })
-      dispatchFields({ type: 'UPDATE', path: 'og.ogImage', value, valid: true })
-      dispatchFields({ type: 'UPDATE', path: 'meta.image', value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'coverImage', value, initialValue: value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'og.ogImage', value, initialValue: value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: 'meta.image', value, initialValue: value, valid: true })
     } else if (fieldName === 'content') {
       let lexicalValue = typeof value === 'string' ? convertTextToLexicalJson(value) : value
       if (lexicalValue?.root?.children && result?.title) {
@@ -171,9 +172,20 @@ export const AIAssistant: React.FC = () => {
       }
       dispatchFields({ type: 'UPDATE', path: 'content', value: lexicalValue, initialValue: lexicalValue, valid: true })
     } else {
-      dispatchFields({ type: 'UPDATE', path: fieldName, value, valid: true })
+      dispatchFields({ type: 'UPDATE', path: fieldName, value, initialValue: value, valid: true })
     }
     setApplied(prev => ({ ...prev, [fieldName]: true }))
+  }
+
+  const applyAll = () => {
+    if (!result) return
+    if (result.title) applyField('title', result.title)
+    if (result.coverImage) applyField('coverImage', result.coverImage)
+    if (result.excerpt) applyField('excerpt', result.excerpt)
+    if (result.content) applyField('content', result.content)
+    if (result.tags) applyField('tags', result.tags)
+    if (result.metaTitle) applyField('metaTitle', result.metaTitle)
+    if (result.metaDescription) applyField('metaDescription', result.metaDescription)
   }
 
   const buttons: { action: Action; icon: string; label: string; desc: string }[] = [
@@ -474,13 +486,44 @@ export const AIAssistant: React.FC = () => {
             {status === 'success' && result && (
               <div className="ai-result" style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
                 <div style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: '#2ecc71',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                  padding: '4px 0',
-                }}>✅ Ready — click to apply</div>
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '2px 0',
+                }}>
+                  <div style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: '#2ecc71',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                  }}>✅ Ready — click to apply</div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={applyAll}
+                  style={{
+                    width: '100%',
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    background: 'linear-gradient(135deg, #7c6af7 0%, #2085ec 100%)',
+                    color: '#fff',
+                    fontWeight: 700,
+                    fontSize: 12,
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    marginBottom: 4,
+                    boxShadow: '0 4px 12px rgba(124,106,247,0.35)',
+                    transition: 'opacity 0.15s ease, transform 0.15s ease',
+                  }}
+                >
+                  ⚡ Apply All Fields
+                </button>
 
                 {result.title && (
                   <ResultCard label="Title" value={result.title} applied={!!applied['title']} onApply={() => applyField('title', result.title)} />

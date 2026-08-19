@@ -302,56 +302,99 @@ async function scrapeUrlDirectly(url: string) {
       .slice(0, 4)
   }
 
-  let scrapedImageUrl = $('meta[property="og:image"]').attr('content') ||
-                        $('meta[name="twitter:image"]').attr('content') ||
-                        $('link[rel="image_src"]').attr('href') ||
-                        ''
-  
-  if (scrapedImageUrl) {
-    scrapedImageUrl = resolveUrl(url, scrapedImageUrl)
-  } else {
-    const articleImages = $('article img, main img, .content img, .post img, #content img')
-    let foundImg = ''
-    articleImages.each((_, el) => {
-      const src = $(el).attr('src')
-      if (src) {
-        const resolved = resolveUrl(url, src)
+  let scrapedImageUrl = ''
+
+  // 1. Check all standard and vendor OpenGraph / Twitter / Schema meta tags
+  const metaSelectors = [
+    'meta[property="og:image"]',
+    'meta[property="og:image:url"]',
+    'meta[property="og:image:secure_url"]',
+    'meta[name="og:image"]',
+    'meta[name="twitter:image"]',
+    'meta[name="twitter:image:src"]',
+    'meta[property="twitter:image"]',
+    'meta[property="twitter:image:src"]',
+    'meta[itemprop="image"]',
+    'link[rel="image_src"]',
+  ]
+
+  for (const sel of metaSelectors) {
+    const val = $(sel).attr('content') || $(sel).attr('href')
+    if (val && val.trim() && !val.startsWith('data:')) {
+      scrapedImageUrl = val.trim()
+      break
+    }
+  }
+
+  // 2. Check JSON-LD scripts for news article schema
+  if (!scrapedImageUrl) {
+    $('script[type="application/ld+json"]').each((_, script) => {
+      if (scrapedImageUrl) return false
+      try {
+        const json = JSON.parse($(script).html() || '{}')
+        const findImg = (obj: any): string | null => {
+          if (!obj || typeof obj !== 'object') return null
+          if (typeof obj.image === 'string') return obj.image
+          if (Array.isArray(obj.image) && obj.image.length > 0) {
+            return typeof obj.image[0] === 'string' ? obj.image[0] : obj.image[0]?.url
+          }
+          if (obj.image && typeof obj.image === 'object' && obj.image.url) return obj.image.url
+          if (typeof obj.thumbnailUrl === 'string') return obj.thumbnailUrl
+          if (Array.isArray(obj['@graph'])) {
+            for (const item of obj['@graph']) {
+              const found = findImg(item)
+              if (found) return found
+            }
+          }
+          return null
+        }
+        const found = findImg(json)
+        if (found) {
+          scrapedImageUrl = found
+          return false
+        }
+      } catch {}
+    })
+  }
+
+  // 3. Check HTML article/figure/content images (handles WordPress, News themes, Next.js, etc.)
+  if (!scrapedImageUrl) {
+    const imgElements = $('article img, main img, figure img, picture img, .featured-image img, .post-thumbnail img, .image-link img, .post-content img, .entry-content img, img')
+    imgElements.each((_, el) => {
+      if (scrapedImageUrl) return false
+      let src = $(el).attr('src') || $(el).attr('data-src') || $(el).attr('data-lazy-src') || $(el).attr('data-orig-file')
+      if (!src && $(el).attr('srcset')) {
+        src = $(el).attr('srcset')?.split(',')[0]?.trim()?.split(' ')[0]
+      }
+      if (src && !src.startsWith('data:')) {
+        const lowerSrc = src.toLowerCase()
         if (
-          resolved.startsWith('http') && 
-          !resolved.includes('avatar') && 
-          !resolved.includes('gravatar') && 
-          !resolved.includes('logo') && 
-          !resolved.includes('icon') && 
-          !resolved.includes('spinner') &&
-          !resolved.includes('loader')
+          !lowerSrc.includes('avatar') &&
+          !lowerSrc.includes('gravatar') &&
+          !lowerSrc.includes('logo') &&
+          !lowerSrc.includes('icon') &&
+          !lowerSrc.includes('spinner') &&
+          !lowerSrc.includes('loader') &&
+          !lowerSrc.includes('pixel') &&
+          !lowerSrc.includes('addec')
         ) {
-          foundImg = resolved
+          scrapedImageUrl = src
           return false
         }
       }
     })
-    
-    if (!foundImg) {
-      $('img').each((_, el) => {
-        const src = $(el).attr('src')
-        if (src) {
-          const resolved = resolveUrl(url, src)
-          if (
-            resolved.startsWith('http') && 
-            !resolved.includes('avatar') && 
-            !resolved.includes('gravatar') && 
-            !resolved.includes('logo') && 
-            !resolved.includes('icon') && 
-            !resolved.includes('spinner') &&
-            !resolved.includes('loader')
-          ) {
-            foundImg = resolved
-            return false
-          }
-        }
-      })
+  }
+
+  if (scrapedImageUrl) {
+    // Decode Next.js image proxy URLs if present
+    if (scrapedImageUrl.includes('/_next/image?url=')) {
+      try {
+        const nextUrl = new URL(resolveUrl(url, scrapedImageUrl))
+        const innerUrl = nextUrl.searchParams.get('url')
+        if (innerUrl) scrapedImageUrl = innerUrl
+      } catch {}
     }
-    scrapedImageUrl = foundImg
+    scrapedImageUrl = resolveUrl(url, scrapedImageUrl)
   }
 
   const isJunkText = (t: string) => {
