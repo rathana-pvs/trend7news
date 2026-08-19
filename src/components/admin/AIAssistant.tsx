@@ -528,12 +528,12 @@ export const AIAssistant: React.FC = () => {
                 {result.title && (
                   <ResultCard label="Title" value={result.title} applied={!!applied['title']} onApply={() => applyField('title', result.title)} />
                 )}
-                {result.coverImage && (
+                {(result.coverImage || result.scrapedImageUrl) && (
                   <ResultCard 
                     label="Cover Image" 
-                    value={`Image imported to media library. ID: ${result.coverImage}`} 
+                    value={result.coverImage ? `Cover image imported to media library (ID: ${result.coverImage})` : 'Image found at URL'} 
                     applied={!!applied['coverImage']} 
-                    onApply={() => applyField('coverImage', result.coverImage)} 
+                    onApply={() => result.coverImage && applyField('coverImage', result.coverImage)} 
                     imageUrl={result.scrapedImageUrl}
                   />
                 )}
