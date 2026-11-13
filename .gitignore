@@ -29,3 +29,6 @@ yarn-error.log*
 # vercel / cloudflare
 .vercel
 .wrangler
+
+# Local website connector credentials
+/reel-studio-connection.json

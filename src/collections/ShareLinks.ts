@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto'
+import { revalidateTag } from 'next/cache'
 import type { CollectionConfig } from 'payload'
 
 export const ShareLinks: CollectionConfig = {
@@ -17,6 +19,8 @@ export const ShareLinks: CollectionConfig = {
     },
   },
   hooks: {
+    afterChange: [({ doc }) => { try { revalidateTag('articles') } catch {} return doc }],
+    afterDelete: [({ doc }) => { try { revalidateTag('articles') } catch {} return doc }],
     beforeChange: [
       async ({ data, req }) => {
         if (!data.key) {
@@ -24,7 +28,7 @@ export const ShareLinks: CollectionConfig = {
           let isUnique = false
           let attempts = 0
           while (!isUnique && attempts < 10) {
-            uniqueKey = Math.random().toString(36).substring(2, 7)
+            uniqueKey = randomBytes(12).toString('hex')
             const existing = await req.payload.find({
               collection: 'share-links' as any,
               where: { key: { equals: uniqueKey } },
@@ -36,7 +40,7 @@ export const ShareLinks: CollectionConfig = {
             attempts++
           }
           if (!isUnique) {
-            uniqueKey = `link-${Date.now().toString().slice(-5)}`
+            throw new Error('Could not generate a unique tracking key')
           }
           data.key = uniqueKey
         }
@@ -45,12 +49,13 @@ export const ShareLinks: CollectionConfig = {
     ],
   },
   fields: [
+    { name: 'studioKey', type: 'text', unique: true, admin: { hidden: true } },
     {
       name: 'key',
       type: 'text',
       unique: true,
       admin: {
-        description: 'Auto-generated 5-character unique key.',
+        description: 'Auto-generated unique tracking key.',
         readOnly: true,
       },
     },

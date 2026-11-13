@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "name": "Trend7News",
+  "baseUrl": "https://trend7news.com",
+  "adapter": "payload-news-v1"
+}

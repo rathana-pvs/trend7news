@@ -72,6 +72,7 @@ export interface Config {
     media: Media;
     users: User;
     'share-links': ShareLink;
+    'studio-publications': StudioPublication;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +85,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'share-links': ShareLinksSelect<false> | ShareLinksSelect<true>;
+    'studio-publications': StudioPublicationsSelect<false> | StudioPublicationsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -131,6 +133,8 @@ export interface UserAuthOperations {
  */
 export interface Article {
   id: number;
+  studioKey?: string | null;
+  studioFingerprint?: string | null;
   title: string;
   /**
    * Auto-generated from title.
@@ -200,6 +204,7 @@ export interface Article {
  */
 export interface Media {
   id: number;
+  studioKey?: string | null;
   /**
    * Alt text for accessibility and SEO
    */
@@ -313,8 +318,9 @@ export interface User {
  */
 export interface ShareLink {
   id: number;
+  studioKey?: string | null;
   /**
-   * Auto-generated 5-character unique key.
+   * Auto-generated unique tracking key.
    */
   key?: string | null;
   /**
@@ -326,6 +332,19 @@ export interface ShareLink {
    */
   label?: string | null;
   clicks?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studio-publications".
+ */
+export interface StudioPublication {
+  id: number;
+  studioKey: string;
+  fingerprint: string;
+  article?: (number | null) | Article;
+  owner?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -372,6 +391,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'share-links';
         value: number | ShareLink;
+      } | null)
+    | ({
+        relationTo: 'studio-publications';
+        value: number | StudioPublication;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -420,6 +443,8 @@ export interface PayloadMigration {
  * via the `definition` "articles_select".
  */
 export interface ArticlesSelect<T extends boolean = true> {
+  studioKey?: T;
+  studioFingerprint?: T;
   title?: T;
   slug?: T;
   excerpt?: T;
@@ -476,6 +501,7 @@ export interface AuthorsSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  studioKey?: T;
   alt?: T;
   caption?: T;
   source?: T;
@@ -556,10 +582,23 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "share-links_select".
  */
 export interface ShareLinksSelect<T extends boolean = true> {
+  studioKey?: T;
   key?: T;
   article?: T;
   label?: T;
   clicks?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studio-publications_select".
+ */
+export interface StudioPublicationsSelect<T extends boolean = true> {
+  studioKey?: T;
+  fingerprint?: T;
+  article?: T;
+  owner?: T;
   updatedAt?: T;
   createdAt?: T;
 }

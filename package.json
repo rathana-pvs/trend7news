@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test:studio": "node --test test/studio.test.cjs",
     "generate:types": "payload generate:types",
     "seed": "cross-env PAYLOAD_CONFIG_PATH=payload.config.ts tsx src/lib/seed.ts"
   },

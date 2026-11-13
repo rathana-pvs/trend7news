@@ -26,7 +26,7 @@ export const Articles: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data }) => {
+      async ({ data, originalDoc }) => {
         if (!data.slug && data.title) {
           const generatedSlug = slugify(data.title)
           data.slug = generatedSlug || `article-${Date.now()}`
@@ -38,19 +38,16 @@ export const Articles: CollectionConfig = {
           data.readTime = Math.max(1, Math.ceil(wordCount / 200))
         }
 
-        if (!data.og) {
-          data.og = {}
-        }
-        data.og.metaTitle = data.title
-        data.og.metaDescription = data.excerpt
-        data.og.ogImage = data.coverImage
-
-        if (!data.meta) {
-          data.meta = {}
-        }
-        data.meta.title = data.title
-        data.meta.description = data.excerpt
-        data.meta.image = data.coverImage
+        // Keep custom Studio/CMS SEO when saving or performing partial updates.
+        const og = { ...originalDoc?.og, ...data.og }
+        const meta = { ...originalDoc?.meta, ...data.meta }
+        const title = data.title ?? originalDoc?.title
+        const excerpt = data.excerpt ?? originalDoc?.excerpt
+        const cover = data.coverImage ?? originalDoc?.coverImage
+        data.og = { ...og, metaTitle: og.metaTitle || title,
+          metaDescription: og.metaDescription || excerpt, ogImage: og.ogImage || cover }
+        data.meta = { ...meta, title: meta.title || title,
+          description: meta.description || excerpt, image: meta.image || cover }
 
         return data
       },
@@ -97,6 +94,8 @@ export const Articles: CollectionConfig = {
     ],
   },
   fields: [
+    { name: 'studioKey', type: 'text', unique: true, admin: { hidden: true } },
+    { name: 'studioFingerprint', type: 'text', admin: { hidden: true } },
     { name: 'title', type: 'text', required: true },
     {
       name: 'slug',

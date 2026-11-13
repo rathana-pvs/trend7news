@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getArticle, getArticles, getMostRead } from '@/lib/api-server'
+import { getTrackedArticle, getArticles, getMostRead } from '@/lib/api-server'
 import { ArticleView } from '@/components/article/ArticleView'
 
 /**
@@ -24,7 +24,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug: key, title: slug } = await params
-  const article = await getArticle(slug)
+  const article = await getTrackedArticle(key, slug)
   if (!article) return { title: 'Article Not Found' }
 
   const title = article.meta?.title || article.title
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title,
     description,
-    alternates: { canonical: `/article/${key}/${slug}` },
+    alternates: { canonical: `/article/${article.slug}` },
     openGraph: {
       title,
       description,
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function TrackingArticlePage({ params }: PageProps) {
   const { slug: key, title: slug } = await params
-  const [article, latest, mostRead] = await Promise.all([getArticle(slug), getArticles({ limit: 9 }), getMostRead(6)])
+  const [article, latest, mostRead] = await Promise.all([getTrackedArticle(key, slug), getArticles({ limit: 9 }), getMostRead(6)])
   if (!article) notFound()
 
   const moreArticles = latest.docs.filter((a) => a.id !== article.id).slice(0, 8)

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     await db.execute(sql`UPDATE articles SET views = COALESCE(views, 0) + 1 WHERE id = ${id}`)
     if (key) {
       await db.execute(
-        sql`UPDATE share_links SET clicks = COALESCE(clicks, 0) + 1 WHERE key = ${key}`,
+        sql`UPDATE share_links SET clicks = COALESCE(clicks, 0) + 1 WHERE key = ${key} AND article_id = ${id}`,
       )
     }
   } catch (e) {

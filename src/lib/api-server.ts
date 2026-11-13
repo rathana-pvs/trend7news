@@ -88,7 +88,7 @@ const cachedGetArticle = unstable_cache(
       // 1. Search by slug
       let result = await payload.find({
         collection: 'articles',
-        where: { slug: { equals: slug } },
+        where: { slug: { equals: slug }, status: { equals: 'published' } },
         limit: 1,
         depth: 2,
       })
@@ -97,7 +97,7 @@ const cachedGetArticle = unstable_cache(
       if (result.docs.length === 0 && !isNaN(Number(slug))) {
         result = await payload.find({
           collection: 'articles',
-          where: { id: { equals: Number(slug) } },
+          where: { id: { equals: Number(slug) }, status: { equals: 'published' } },
           limit: 1,
           depth: 2,
         })
@@ -116,7 +116,7 @@ const cachedGetArticle = unstable_cache(
           const articleDoc = typeof shareLink.article === 'object' 
             ? shareLink.article 
             : await payload.findByID({ collection: 'articles', id: shareLink.article, depth: 2 })
-          if (articleDoc) {
+          if (articleDoc?.status === 'published') {
             result.docs = [articleDoc as any]
           }
         }
@@ -141,6 +141,29 @@ export async function getArticle(slug: string): Promise<Article | null> {
     return null
   }
   return cachedGetArticle(slug)
+}
+
+// A tracking key can only display its own published article.
+const cachedGetTrackedArticle = unstable_cache(
+  async (key: string, slug: string): Promise<Article | null> => {
+    const article = await getArticle(slug)
+    if (!article) return null
+    const payload = await getPayloadClient()
+    const result = await payload.find({
+      collection: 'share-links',
+      where: { key: { equals: key }, article: { equals: article.id } },
+      limit: 1,
+      depth: 0,
+    })
+    return result.docs.length ? article : null
+  },
+  ['tracked-article'],
+  { tags: ['articles'] },
+)
+
+export async function getTrackedArticle(key: string, slug: string): Promise<Article | null> {
+  if (isBuildTime) return null
+  return cachedGetTrackedArticle(key, slug)
 }
 
 const cachedGetFeatured = unstable_cache(

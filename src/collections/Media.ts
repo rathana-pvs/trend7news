@@ -64,6 +64,7 @@ export const Media: CollectionConfig = {
     ],
   },
   fields: [
+    { name: 'studioKey', type: 'text', unique: true, admin: { hidden: true } },
     {
       name: 'alt',
       type: 'text',
