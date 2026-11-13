@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getArticle, getArticles } from '@/lib/api-server'
+import { getArticle, getArticles, getMostRead } from '@/lib/api-server'
 import { ArticleView } from '@/components/article/ArticleView'
 
 interface PageProps {
@@ -53,10 +53,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params
-  const [article, latest] = await Promise.all([getArticle(slug), getArticles({ limit: 9 })])
+  const [article, latest, mostRead] = await Promise.all([getArticle(slug), getArticles({ limit: 9 }), getMostRead(6)])
   if (!article) notFound()
 
   const moreArticles = latest.docs.filter((a) => a.id !== article.id).slice(0, 8)
 
-  return <ArticleView article={article} siteUrl={siteUrl} path={`/article/${slug}`} moreArticles={moreArticles} />
+  return <ArticleView article={article} siteUrl={siteUrl} path={`/article/${slug}`} moreArticles={moreArticles}
+      mostRead={mostRead} />
 }

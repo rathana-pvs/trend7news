@@ -1,14 +1,13 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { AdsKeeper } from '@/components/ads/AdsKeeper'
 
 /**
- * Shows paragraph 2 as a faded preview with a "Read full article" button.
- * The remaining text is already in the HTML (hidden), so expanding is instant.
- * The in_article_2 ad only mounts once the reader expands.
+ * Shows one paragraph as a faded preview with a "Read full article" button.
+ * The remaining text (and its ad slot) is already in the HTML but hidden, so
+ * expanding is instant; hidden ad slots stay inactive until revealed.
  */
-export function ArticleExpander({ preview, rest }: { preview: ReactNode; rest: ReactNode }) {
+export function ArticleExpander({ preview, children }: { preview: ReactNode; children: ReactNode }) {
   const [expanded, setExpanded] = useState(false)
 
   return (
@@ -32,9 +31,7 @@ export function ArticleExpander({ preview, rest }: { preview: ReactNode; rest: R
         </div>
       )}
 
-      {expanded && <AdsKeeper slot="in_article_2" />}
-
-      <div hidden={!expanded}>{rest}</div>
+      <div hidden={!expanded}>{children}</div>
     </>
   )
 }

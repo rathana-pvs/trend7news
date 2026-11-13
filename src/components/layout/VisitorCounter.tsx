@@ -7,13 +7,18 @@ export function VisitorCounter() {
   const pathname = usePathname()
   const isFirstRender = useRef(true)
 
-  // 1. Mount whos.amung.us dynamic widget on initial load
+  // 1. Mount the whos.amung.us widget only once the page has fully loaded and the
+  //    browser is idle. Its script pulls in ~12 third-party tracker domains, so it
+  //    must never compete with the article, images or ads for bandwidth.
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const win = window as any
-    win._wau = win._wau || []
+    let idleId: number | undefined
+    let timer: ReturnType<typeof setTimeout> | undefined
 
-    if (!document.getElementById('_wau_widget_script')) {
+    const mount = () => {
+      if (document.getElementById('_wau_widget_script')) return
+      win._wau = win._wau || []
       win._wau.push(['dynamic', 'ztww1qct06', 'yh7', 'c4302bffffff', 'small'])
 
       const script = document.createElement('script')
@@ -21,6 +26,22 @@ export function VisitorCounter() {
       script.src = 'https://waust.at/d.js'
       script.async = true
       document.head.appendChild(script)
+    }
+
+    const scheduleIdle = () => {
+      timer = setTimeout(() => {
+        if ('requestIdleCallback' in win) idleId = win.requestIdleCallback(mount, { timeout: 5000 })
+        else mount()
+      }, 2500)
+    }
+
+    if (document.readyState === 'complete') scheduleIdle()
+    else window.addEventListener('load', scheduleIdle, { once: true })
+
+    return () => {
+      window.removeEventListener('load', scheduleIdle)
+      if (timer) clearTimeout(timer)
+      if (idleId !== undefined && 'cancelIdleCallback' in win) win.cancelIdleCallback(idleId)
     }
   }, [])
 
@@ -33,6 +54,10 @@ export function VisitorCounter() {
     }
 
     const timer = setTimeout(() => {
+      // If the widget script hasn't loaded yet, it will count this page itself when it does
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof (window as any).WAU_r_d !== 'function') return
+
       // Set document.title from <h1> headline if present
       const h1Element = document.querySelector('h1')
       if (h1Element && h1Element.textContent && h1Element.textContent.trim().length > 3) {

@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import Script from 'next/script'
 import { Public_Sans, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google'
 import '@/app/globals.css'
 import { Header } from '@/components/layout/Header'
@@ -63,10 +62,6 @@ export default async function FrontendLayout({
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
-        <Script
-          src="https://jsc.adskeeper.com/site/1108243.js"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   )

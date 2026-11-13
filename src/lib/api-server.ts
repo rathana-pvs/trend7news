@@ -265,3 +265,49 @@ export async function getRelatedArticles(articleId: string | number): Promise<Ar
   }
   return cachedGetRelatedArticles(articleId)
 }
+
+const cachedGetMostRead = unstable_cache(
+  async (limit: number): Promise<Article[]> => {
+    try {
+      const payload = await getPayloadClient()
+      // Most-viewed among recent stories, so the list doesn't freeze on old hits
+      const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+      const result = await payload.find({
+        collection: 'articles',
+        where: { status: { equals: 'published' }, publishedAt: { greater_than: since } },
+        sort: '-views',
+        limit,
+        depth: 1,
+      })
+      let docs = result.docs as unknown as Article[]
+      if (docs.length < limit) {
+        const fallback = await payload.find({
+          collection: 'articles',
+          where: { status: { equals: 'published' } },
+          sort: '-views',
+          limit,
+          depth: 1,
+        })
+        const ids = new Set(docs.map((d) => d.id))
+        docs = [...docs, ...(fallback.docs as unknown as Article[]).filter((d) => !ids.has(d.id))].slice(0, limit)
+      }
+      return docs.map((doc: any) => {
+        if (doc.coverImage && typeof doc.coverImage === 'object') {
+          doc.coverImage.url = normalizeImageUrl(doc.coverImage.url)
+        }
+        return doc
+      })
+    } catch (error) {
+      console.warn('⚠️ getMostRead failed:', error instanceof Error ? error.message : error)
+      return []
+    }
+  },
+  ['most-read'],
+  { tags: ['articles'], revalidate: 300 },
+)
+
+/** Top articles by views (recent first), refreshed every 5 minutes. */
+export async function getMostRead(limit = 5): Promise<Article[]> {
+  if (isBuildTime) return []
+  return cachedGetMostRead(limit)
+}

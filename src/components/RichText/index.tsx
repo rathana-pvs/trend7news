@@ -8,6 +8,9 @@ export type RichTextProps = {
   articleTitle?: string
 }
 
+/** Words of body text before the second in-content ad. */
+const WORDS_BETWEEN_ADS = 350
+
 function extractNodeText(node: any): string {
   if (!node) return ''
   if (typeof node.text === 'string') return node.text
@@ -17,10 +20,55 @@ function extractNodeText(node: any): string {
   return ''
 }
 
+const wordCount = (node: any) => extractNodeText(node).split(/\s+/).filter(Boolean).length
+
+/** True if a paragraph ends like a full sentence (imported text is sometimes split mid-sentence). */
+const endsSentence = (node: any) => /[.!?…"”'’)\]]\s*$/.test(extractNodeText(node).trim())
+
+/** A safe place for an ad: after a non-empty paragraph that ends a sentence. */
+const isAdBoundary = (node: any) => node?.type === 'paragraph' && wordCount(node) > 0 && endsSentence(node)
+
+/** Index (exclusive) of the n-th paragraph, or -1 if there aren't that many. */
+function afterNthParagraph(nodes: any[], n: number): number {
+  let count = 0
+  for (let i = 0; i < nodes.length; i++) {
+    if (nodes[i].type === 'paragraph' && wordCount(nodes[i]) > 0) {
+      count++
+      if (count === n) return i + 1
+    }
+  }
+  return -1
+}
+
+/** First sentence-ending paragraph boundary at or after the n-th paragraph. */
+function adBreakAfterParagraph(nodes: any[], n: number): number {
+  const start = afterNthParagraph(nodes, n)
+  if (start === -1) return -1
+  for (let i = start - 1; i < nodes.length; i++) {
+    if (isAdBoundary(nodes[i])) return i + 1
+  }
+  return -1
+}
+
 /**
- * Server-rendered article body. Layout:
- *   p1 → in_article_1 ad → p2 (faded preview) → "Read full article" → in_article_2 ad → rest
- * All text is in the HTML (fast first paint, SEO); only the expand toggle runs on the client.
+ * First paragraph boundary after ~WORDS_BETWEEN_ADS words, leaving at least
+ * one node after it so the ad never sits at the very end. -1 if too short.
+ */
+function adBreakByWords(nodes: any[]): number {
+  let words = 0
+  for (let i = 0; i < nodes.length - 1; i++) {
+    words += wordCount(nodes[i])
+    if (words >= WORDS_BETWEEN_ADS && isAdBoundary(nodes[i])) return i + 1
+  }
+  return -1
+}
+
+/**
+ * Server-rendered article body with ad positions:
+ *
+ *   p1, p2 → in_article_1 → p3 (faded) + "Read full article" → … ~350 words … → in_article_2 → rest
+ *
+ * Ads never split a paragraph. Short articles get a single ad after p1 and no gate.
  */
 export const RichText = ({ content, className, articleTitle }: RichTextProps) => {
   if (!content) return null
@@ -44,36 +92,47 @@ export const RichText = ({ content, className, articleTitle }: RichTextProps) =>
     })
   }
 
-  let paragraphCount = 0
-  let p1EndIndex = nodes.length
-  let p2EndIndex = nodes.length
-  for (let i = 0; i < nodes.length; i++) {
-    if (nodes[i].type === 'paragraph') {
-      paragraphCount++
-      if (paragraphCount === 1) p1EndIndex = i + 1
-      if (paragraphCount === 2) p2EndIndex = i + 1
-    }
-  }
+  const firstAdAt = adBreakAfterParagraph(nodes, 2)
+  const hasEnoughAfter = firstAdAt !== -1 && afterNthParagraph(nodes.slice(firstAdAt), 1) !== -1
 
-  const p1 = serializeLexical(nodes.slice(0, p1EndIndex), 'p1')
-  const p2Nodes = nodes.slice(p1EndIndex, p2EndIndex)
-  const p3 = serializeLexical(nodes.slice(p2EndIndex), 'p3')
-
-  if (p2Nodes.length === 0) {
+  // Short article: p1 → ad → rest, no gate
+  if (!hasEnoughAfter) {
+    const at = adBreakAfterParagraph(nodes, 1)
+    if (at === -1) return <div className={`rich-text ${className || ''}`}>{serializeLexical(nodes, 'all')}</div>
     return (
       <div className={`rich-text ${className || ''}`}>
-        {p1}
+        {serializeLexical(nodes.slice(0, at), 'a')}
         <AdsKeeper slot="in_article_1" />
-        {p3}
+        {serializeLexical(nodes.slice(at), 'b')}
       </div>
     )
   }
 
+  const lead = nodes.slice(0, firstAdAt)
+  const after = nodes.slice(firstAdAt)
+  const previewEnd = afterNthParagraph(after, 1)
+  const preview = after.slice(0, previewEnd)
+  const rest = after.slice(previewEnd)
+
+  // Second ad ~350 words into the remaining text (counted from the first ad)
+  const secondAdAt = adBreakByWords(after)
+  const restBreak = secondAdAt === -1 ? -1 : Math.max(0, secondAdAt - previewEnd)
+
   return (
     <div className={`rich-text ${className || ''}`}>
-      {p1}
+      {serializeLexical(lead, 'lead')}
       <AdsKeeper slot="in_article_1" />
-      <ArticleExpander preview={serializeLexical(p2Nodes, 'p2')} rest={p3} />
+      <ArticleExpander preview={serializeLexical(preview, 'preview')}>
+        {restBreak <= 0 ? (
+          serializeLexical(rest, 'rest')
+        ) : (
+          <>
+            {serializeLexical(rest.slice(0, restBreak), 'rest-a')}
+            <AdsKeeper slot="in_article_2" />
+            {serializeLexical(rest.slice(restBreak), 'rest-b')}
+          </>
+        )}
+      </ArticleExpander>
     </div>
   )
 }

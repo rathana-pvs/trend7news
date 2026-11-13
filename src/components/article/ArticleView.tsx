@@ -5,9 +5,9 @@ import { ReadingBar } from '@/components/ui/ReadingBar'
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import { getImageSources } from '@/lib/image'
 import { formatDate } from '@/lib/utils'
-import { ShareBar } from './ShareBar'
 import { ViewTracker } from './ViewTracker'
 import { MoreStories } from './MoreStories'
+import { MostReadRail } from './MostReadRail'
 
 type Props = {
   article: Article
@@ -16,12 +16,14 @@ type Props = {
   /** Path of this page, e.g. /article/my-story or /article/ab12c/my-story */
   path: string
   moreArticles: Article[]
+  /** Desktop right-rail list */
+  mostRead?: Article[]
   /** Share-link key when visited through a tracked link */
   shareKey?: string
 }
 
 /** Shared mobile-first article layout used by both article routes. */
-export function ArticleView({ article, siteUrl, path, moreArticles, shareKey }: Props) {
+export function ArticleView({ article, siteUrl, path, moreArticles, mostRead = [], shareKey }: Props) {
   const pageUrl = `${siteUrl}${path}`
   const hero = getImageSources(article.coverImage)
   const heroAbs = hero.src.startsWith('/') ? `${siteUrl}${hero.src}` : hero.src
@@ -46,12 +48,8 @@ export function ArticleView({ article, siteUrl, path, moreArticles, shareKey }: 
       <ReadingBar />
       <ViewTracker articleId={article.id} shareKey={shareKey} />
 
-      <div className="max-w-[1400px] mx-auto flex justify-center items-start gap-8 xl:px-6">
-        <aside className="hidden xl:block w-[160px] 2xl:w-[220px] shrink-0 sticky top-20 self-start">
-          <AdsKeeper slot="sidebar_left" />
-        </aside>
-
-        <article className="w-full max-w-[720px] min-w-0 px-4 sm:px-6 pt-5 sm:pt-8 pb-8">
+      <div className="max-w-[1100px] mx-auto flex justify-center items-start lg:gap-10 lg:px-6">
+        <article className="w-full max-w-[720px] min-w-0 px-4 sm:px-6 lg:px-0 pt-5 sm:pt-8 pb-8">
           <header>
             {article.isBreaking && (
               <span className="inline-block mb-3 text-[11px] font-bold uppercase tracking-wider text-[#d0021b]">
@@ -99,10 +97,6 @@ export function ArticleView({ article, siteUrl, path, moreArticles, shareKey }: 
             )}
           </figure>
 
-          <div className="mt-5">
-            <ShareBar url={pageUrl} title={article.title} />
-          </div>
-
           <div className="article-body mt-6">
             {article.content ? (
               <RichText content={article.content} articleTitle={article.title} />
@@ -117,18 +111,18 @@ export function ArticleView({ article, siteUrl, path, moreArticles, shareKey }: 
             </p>
           )}
 
-          <div className="mt-6 rounded-xl bg-gray-50 p-4">
-            <p className="text-sm font-bold text-gray-900 mb-3">Share this story</p>
-            <ShareBar url={pageUrl} title={article.title} />
-          </div>
-
-          <AdsKeeper slot="feed_bottom" className="mt-8" />
+          {/* End-of-article native widget (AdsKeeper's best-fit position) */}
+          <AdsKeeper slot="feed_bottom" className="!mt-8" />
 
           <MoreStories articles={moreArticles} />
         </article>
 
-        <aside className="hidden xl:block w-[160px] 2xl:w-[220px] shrink-0 sticky top-20 self-start">
-          <AdsKeeper slot="sidebar_right" />
+        {/* Desktop right rail: sticky ad + most read (hidden below 1024px) */}
+        <aside className="hidden lg:block w-[300px] shrink-0 self-stretch pt-8">
+          <div className="sticky top-16 flex flex-col gap-8">
+            <AdsKeeper slot="sidebar_right" className="!my-0" />
+            <MostReadRail articles={mostRead.filter((a) => a.id !== article.id).slice(0, 5)} />
+          </div>
         </aside>
       </div>
     </>
