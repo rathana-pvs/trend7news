@@ -1,10 +1,22 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+import { Public_Sans, Source_Serif_4, IBM_Plex_Mono } from 'next/font/google'
 import '@/app/globals.css'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
+
+// Self-hosted by next/font: no render-blocking Google Fonts request, preloaded, size-adjusted fallbacks.
+const sans = Public_Sans({ subsets: ['latin'], display: 'swap', variable: '--font-sans' })
+const serif = Source_Serif_4({ subsets: ['latin'], display: 'swap', variable: '--font-serif' })
+const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '700'], display: 'swap', variable: '--font-mono', preload: false })
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#0a0a0a',
+}
 
 const envUrl = process.env.NEXT_PUBLIC_SITE_URL
 const siteUrl = envUrl && !envUrl.includes('placeholder.com') ? envUrl : 'https://trend7news.com'
@@ -38,12 +50,12 @@ export default async function FrontendLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
       <body>
         <NavigationProgress />
-        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="min-h-screen flex flex-col">
           <Header />
-          <main style={{ flex: 1 }}>
+          <main className="flex-1">
             {children}
           </main>
           <Footer />

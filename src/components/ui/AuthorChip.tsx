@@ -1,5 +1,3 @@
-'use client'
-
 import { formatDate } from '@/lib/utils'
 import { Author } from '@/types'
 import { dict } from '@/lib/i18n'

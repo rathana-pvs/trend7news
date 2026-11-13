@@ -1,5 +1,3 @@
-'use client'
-
 import { Article } from '@/types'
 import { ArticleCard } from '@/components/ui/ArticleCard'
 

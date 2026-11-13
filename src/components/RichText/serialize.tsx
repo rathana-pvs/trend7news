@@ -1,6 +1,6 @@
 import { Fragment, JSX } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 
 type Node = {
   type: string
@@ -47,34 +47,31 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
     switch (node.type) {
       case 'h1':
         return (
-          <h1 key={nodeKey} className="font-headline font-black text-3xl sm:text-4xl mb-4 mt-8 text-gray-900">
+          <h2 key={nodeKey}>
             {children}
-          </h1>
+          </h2>
         )
       case 'h2':
         return (
-          <h2 key={nodeKey} className="font-headline font-extrabold text-2xl sm:text-3xl mb-4 mt-8 text-gray-900">
+          <h2 key={nodeKey}>
             {children}
           </h2>
         )
       case 'h3':
         return (
-          <h3 key={nodeKey} className="font-headline font-bold text-xl sm:text-2xl mb-3 mt-6 text-gray-900">
+          <h3 key={nodeKey}>
             {children}
           </h3>
         )
       case 'h4':
         return (
-          <h4 key={nodeKey} className="font-headline font-bold text-lg mb-3 mt-4 text-gray-900">
+          <h4 key={nodeKey}>
             {children}
           </h4>
         )
       case 'quote':
         return (
-          <blockquote 
-            key={nodeKey} 
-            className="border-l-4 border-[#d0021b] pl-5 py-2 my-6 italic text-xl leading-relaxed bg-gray-50 text-gray-900 font-serif-body"
-          >
+          <blockquote key={nodeKey}>
             {children}
           </blockquote>
         )
@@ -83,7 +80,9 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
           <Link
             key={nodeKey}
             href={node.fields?.url || ''}
-            className="underline font-semibold text-[#d0021b] hover:text-black transition-colors"
+            {...(node.fields?.newTab || /^https?:/.test(node.fields?.url || '')
+              ? { target: '_blank', rel: 'noopener noreferrer' }
+              : {})}
           >
             {children}
           </Link>
@@ -101,6 +100,7 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
               <iframe
                 src={ytId ? `https://www.youtube.com/embed/${ytId}` : embedUrl}
                 className="w-full h-full"
+                loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
@@ -122,6 +122,7 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
             <div key={nodeKey} className="my-8 rounded overflow-hidden bg-black">
               <video
                 src={media.url || ''}
+                preload="metadata"
                 controls
                 className="w-full aspect-video"
                 playsInline
@@ -138,20 +139,15 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
         }
 
         return (
-          <div key={nodeKey} className="my-8 relative rounded overflow-hidden group">
-            <Image
-              src={media.url || ''}
+          <figure key={nodeKey} className="article-figure">
+            <ResponsiveImage
+              media={media}
               alt={media.alt || ''}
-              width={media.width || 1200}
-              height={media.height || 800}
-              className="w-full h-auto object-cover"
+              sizes="(max-width: 720px) 100vw, 720px"
+              className="w-full h-auto bg-gray-100"
             />
-            {media.caption && (
-              <div className="mt-2 text-xs font-mono text-gray-500">
-                {media.caption}
-              </div>
-            )}
-          </div>
+            {media.caption && <figcaption>{media.caption}</figcaption>}
+          </figure>
         )
       case 'embed':
       case 'youtube':
@@ -166,6 +162,7 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
               <iframe
                 src={`https://www.youtube.com/embed/${youtubeId}`}
                 className="w-full h-full"
+                loading="lazy"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
@@ -176,8 +173,9 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
         return (
           <div key={nodeKey} className="my-8 rounded overflow-hidden aspect-video bg-black">
              <iframe 
-               src={url} 
-               className="w-full h-full" 
+               src={url}
+               className="w-full h-full"
+               loading="lazy"
                allowFullScreen 
              />
           </div>
@@ -186,22 +184,19 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
       case 'list':
         const ListTag = node.tag === 'ol' ? 'ol' : 'ul'
         return (
-          <ListTag 
-            key={nodeKey} 
-            className={`${node.tag === 'ol' ? 'list-decimal' : 'list-disc'} pl-6 mb-6 space-y-2 text-gray-800 font-serif-body`}
-          >
+          <ListTag key={nodeKey} className={node.tag === 'ol' ? 'list-decimal' : 'list-disc'}>
             {children}
           </ListTag>
         )
       case 'listitem':
         return (
-          <li key={nodeKey} className="leading-relaxed">
+          <li key={nodeKey}>
             {children}
           </li>
         )
       case 'horizontalrule':
         return (
-          <hr key={nodeKey} className="my-8 border-t border-gray-300" />
+          <hr key={nodeKey} />
         )
       case 'paragraph':
       default:
@@ -211,10 +206,7 @@ export function serializeLexical(nodes: Node[], keyPrefix: string = 'node'): JSX
         const Tag = hasBlockChild ? 'div' : 'p'
         
         return (
-          <Tag 
-            key={nodeKey} 
-            className="mb-6 text-lg leading-relaxed text-gray-800 font-serif-body"
-          >
+          <Tag key={nodeKey}>
             {children}
           </Tag>
         )

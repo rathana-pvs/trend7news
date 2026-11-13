@@ -22,15 +22,15 @@ const config: Config = {
         'border-subtle': 'var(--border-subtle)',
       },
       fontFamily: {
-        sans: ['Public Sans', 'Inter', 'system-ui', 'sans-serif'],
-        serif: ['Source Serif 4', 'Georgia', 'serif'],
-        mono: ['IBM Plex Mono', 'monospace'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       typography: {
         DEFAULT: {
           css: {
             color: 'var(--text-primary)',
-            fontFamily: 'Source Serif 4, Georgia, serif',
+            fontFamily: 'var(--font-serif), Georgia, serif',
             fontSize: '18px',
             lineHeight: '1.85',
           },

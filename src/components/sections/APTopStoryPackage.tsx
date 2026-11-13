@@ -1,7 +1,4 @@
-'use client'
-
-import { motion } from 'framer-motion'
-import Image from 'next/image'
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import Link from 'next/link'
 import { Article } from '@/types'
 import { AuthorChip } from '@/components/ui/AuthorChip'
@@ -16,7 +13,6 @@ interface APTopStoryPackageProps {
 export function APTopStoryPackage({ hero, secondary }: APTopStoryPackageProps) {
   if (!hero) return null
 
-  const heroImage = hero.coverImage?.url || 'https://picsum.photos/seed/hero/1200/800'
 
   return (
     <section className="w-full bg-white border-b border-gray-300 py-6 sm:py-8">
@@ -27,14 +23,11 @@ export function APTopStoryPackage({ hero, secondary }: APTopStoryPackageProps) {
           <div className="lg:col-span-8">
             <Link href={`/article/${hero.slug}`} className="group block">
               <div className="relative w-full aspect-[16/10] overflow-hidden mb-4 bg-gray-100">
-                <Image
-                  src={heroImage}
+                <ResponsiveImage
+                  media={hero.coverImage}
                   alt={hero.coverImage?.alt || hero.title}
-                  fill
-                  priority
-                  unoptimized
-                  sizes="(max-width: 1024px) 100vw, 66vw"
-                  className="object-cover group-hover:scale-[1.01] transition-transform duration-500"
+                  sizes="(max-width: 1024px) 100vw, 66vw" priority
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
                 />
                 {hero.isBreaking && (
                   <div className="absolute top-4 left-4">
@@ -69,13 +62,12 @@ export function APTopStoryPackage({ hero, secondary }: APTopStoryPackageProps) {
               <div key={article.id} className="py-4 first:pt-0 last:pb-0">
                 <Link href={`/article/${article.slug}`} className="group flex gap-3 items-start">
                   <div className="relative w-24 h-16 flex-shrink-0 bg-gray-100 overflow-hidden">
-                    <Image
-                      src={article.coverImage?.url || `https://picsum.photos/seed/${article.id}/300/200`}
+                    <ResponsiveImage
+                      media={article.coverImage}
                       alt={article.title}
-                      fill
-                      unoptimized
                       sizes="96px"
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      maxWidth={768}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="flex-1 min-w-0">

@@ -36,14 +36,15 @@ export function Header() {
   // Minimal Article Header for News Pages (/article/[slug])
   if (pathname.startsWith('/article/')) {
     return (
-      <header className="w-full bg-[#0a0a0a] text-white z-50 sticky top-0 border-b border-white/10 shadow-md">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
+      <header className="w-full bg-[#0a0a0a]/95 backdrop-blur text-white z-50 sticky top-0 border-b border-white/10">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 flex items-center justify-between h-12">
           
           {/* Left: Back to Home Button */}
           <div className="w-1/3 flex items-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all text-xs font-mono font-bold tracking-wider uppercase group"
+              className="inline-flex items-center gap-1 h-9 pl-2 pr-3 rounded-full hover:bg-white/10 text-white transition-colors text-[13px] font-semibold group"
+              aria-label="Back to home"
             >
               <svg
                 className="w-4 h-4 text-gray-300 transition-transform duration-200 group-hover:-translate-x-0.5 group-hover:text-white"
@@ -54,14 +55,14 @@ export function Header() {
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
-              <span>Back</span>
+              <span>Home</span>
             </Link>
           </div>
 
           {/* Center: Brand Logo */}
           <div className="flex-1 flex justify-center">
             <Link href="/" className="flex items-center gap-1">
-              <span className="font-headline font-black text-xl sm:text-2xl tracking-tighter text-white">
+              <span className="font-headline font-black text-[19px] sm:text-2xl tracking-tighter text-white">
                 TREND<span className="text-[#d0021b]">7</span>NEWS
               </span>
             </Link>

@@ -1,8 +1,5 @@
-'use client'
-
 import Link from 'next/link'
-import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import { Article } from '@/types'
 import { AuthorChip } from './AuthorChip'
 import { BreakingBadge } from './BreakingBadge'
@@ -18,25 +15,20 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article, size = 'md', index = 0, className }: ArticleCardProps) {
   const href = `/article/${article.slug}`
-  const imageUrl = article.coverImage?.url || 'https://picsum.photos/seed/default/800/600'
 
   if (size === 'sm') {
     return (
-      <motion.article
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.04, duration: 0.3 }}
+      <article
         className={`group border-b border-gray-200 py-3.5 cursor-pointer ${className || ''}`}
       >
         <Link href={href} className="flex gap-3 w-full items-start">
           <div className="relative flex-shrink-0 w-24 h-16 bg-gray-100 overflow-hidden">
-            <Image
-              src={imageUrl}
+            <ResponsiveImage
+              media={article.coverImage}
               alt={article.coverImage?.alt || article.title}
-              fill
               sizes="96px"
-              unoptimized
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              maxWidth={768}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           </div>
           <div className="flex flex-col justify-between min-w-0 flex-1">
@@ -48,27 +40,22 @@ export function ArticleCard({ article, size = 'md', index = 0, className }: Arti
             </div>
           </div>
         </Link>
-      </motion.article>
+      </article>
     )
   }
 
   if (size === 'lg') {
     return (
-      <motion.article
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.05, duration: 0.4 }}
+      <article
         className={`group border-b border-gray-200 pb-6 cursor-pointer ${className || ''}`}
       >
         <Link href={href}>
           <div className="relative w-full aspect-video overflow-hidden mb-4 bg-gray-100">
-            <Image
-              src={imageUrl}
+            <ResponsiveImage
+              media={article.coverImage}
               alt={article.coverImage?.alt || article.title}
-              fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              unoptimized
-              className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
             />
             {article.isBreaking && (
               <div className="absolute top-3 left-3">
@@ -86,27 +73,22 @@ export function ArticleCard({ article, size = 'md', index = 0, className }: Arti
             <AuthorChip author={article.author || null} date={article.publishedAt} readTime={article.readTime} />
           </div>
         </Link>
-      </motion.article>
+      </article>
     )
   }
 
   // md default
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.4 }}
+    <article
       className={`group border-b border-gray-200 pb-5 cursor-pointer ${className || ''}`}
     >
       <Link href={href}>
         <div className="relative w-full aspect-video overflow-hidden mb-3 bg-gray-100">
-          <Image
-            src={imageUrl}
+          <ResponsiveImage
+            media={article.coverImage}
             alt={article.coverImage?.alt || article.title}
-            fill
             sizes="(max-width: 768px) 100vw, 33vw"
-            unoptimized
-            className="object-cover group-hover:scale-[1.02] transition-transform duration-500"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
           />
           {article.isBreaking && (
             <div className="absolute top-3 left-3">
@@ -124,6 +106,6 @@ export function ArticleCard({ article, size = 'md', index = 0, className }: Arti
           <AuthorChip author={article.author || null} date={article.publishedAt} readTime={article.readTime} size="sm" />
         </div>
       </Link>
-    </motion.article>
+    </article>
   )
 }
