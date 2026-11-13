@@ -92,12 +92,12 @@ export function Header() {
     <>
       {/* Top Black Header */}
       <header className="w-full bg-[#0a0a0a] text-white z-50">
-        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 flex items-center justify-between h-16 border-b border-white/10">
+        <div className="max-w-[1200px] mx-auto px-3 sm:px-6 flex items-center justify-between h-14">
           
           {/* Left: Date String */}
           <div className="w-1/3 flex items-center">
-            <span className="hidden md:inline-block text-[11px] font-mono text-gray-400 uppercase tracking-wider">
-              {new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+            <span className="hidden md:inline-block text-[13px] text-gray-400" suppressHydrationWarning>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </span>
             <button
               className="w-9 h-9 flex items-center justify-center rounded transition-colors hover:bg-white/10 md:hidden"
@@ -113,7 +113,7 @@ export function Header() {
           {/* Center: AP-Style Brand Logo */}
           <div className="flex-1 flex justify-center">
             <Link href="/" className="flex items-center gap-1 group">
-              <span className="font-headline font-black text-2xl sm:text-3xl tracking-tighter text-white">
+              <span className="font-headline font-black text-[22px] sm:text-[28px] tracking-tighter text-white">
                 TREND<span className="text-[#d0021b]">7</span>NEWS
               </span>
             </Link>
@@ -135,15 +135,15 @@ export function Header() {
         </div>
 
         {/* Sub-Header Topic Navigation Bar */}
-        <div className="bg-[#121212] border-b border-white/10">
-          <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-            <nav className="flex items-center gap-6 overflow-x-auto py-2.5 text-xs font-mono tracking-wider uppercase scrollbar-none whitespace-nowrap">
+        <div className="bg-[#121212] border-t border-white/10">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+            <nav className="flex items-center gap-5 sm:gap-7 overflow-x-auto h-11 text-[14px] font-semibold scrollbar-none whitespace-nowrap" aria-label="Topics">
               {TOPICS.map((topic) => (
                 <Link
                   key={topic.name}
                   href={topic.href}
-                  className={`transition-colors py-1 hover:text-[#d0021b] ${
-                    isActive(topic.href) ? 'text-[#d0021b] font-bold border-b-2 border-[#d0021b]' : 'text-gray-300'
+                  className={`h-full inline-flex items-center border-b-2 transition-colors hover:text-white ${
+                    isActive(topic.href) ? 'text-white border-[#d0021b]' : 'text-gray-400 border-transparent'
                   }`}
                 >
                   {topic.name}
@@ -156,12 +156,12 @@ export function Header() {
 
       {/* Mobile Nav Overlay */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-[100] lg:hidden">
+        <div className="fixed inset-0 z-[100] md:hidden">
           <div
             className="absolute inset-0 bg-black/70 backdrop-blur-xs"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute top-0 right-0 bottom-0 w-80 bg-[#121212] text-white border-l border-white/10 flex flex-col">
+          <div className="absolute top-0 left-0 bottom-0 w-[85vw] max-w-80 bg-[#121212] text-white border-l border-white/10 flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <Link href="/" className="font-headline font-black text-xl tracking-tighter text-white">
                 TREND<span className="text-[#d0021b]">7</span>NEWS
@@ -169,6 +169,7 @@ export function Header() {
               <button
                 onClick={() => setMobileOpen(false)}
                 className="w-9 h-9 flex items-center justify-center rounded hover:bg-white/10 text-gray-400"
+                aria-label="Close menu"
               >
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path d="M18 6 6 18M6 6l12 12" />
@@ -181,7 +182,7 @@ export function Header() {
                 <Link
                   key={topic.name}
                   href={topic.href}
-                  className="px-4 py-3 rounded text-sm font-mono uppercase tracking-wider text-gray-300 hover:bg-white/10 hover:text-white"
+                  className="px-4 py-3 rounded-lg text-[16px] font-semibold text-gray-200 hover:bg-white/10 hover:text-white"
                 >
                   {topic.name}
                 </Link>

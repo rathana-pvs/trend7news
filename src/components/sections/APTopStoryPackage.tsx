@@ -1,8 +1,8 @@
-import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
 import Link from 'next/link'
 import { Article } from '@/types'
-import { AuthorChip } from '@/components/ui/AuthorChip'
-import { BreakingBadge } from '@/components/ui/BreakingBadge'
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage'
+import { ArticleCard } from '@/components/ui/ArticleCard'
+import { SectionHeading } from '@/components/ui/SectionHeading'
 import { formatDate } from '@/lib/utils'
 
 interface APTopStoryPackageProps {
@@ -10,81 +10,53 @@ interface APTopStoryPackageProps {
   secondary: Article[]
 }
 
+/** Lead story + "Top stories" (side column on desktop, list below on mobile). */
 export function APTopStoryPackage({ hero, secondary }: APTopStoryPackageProps) {
   if (!hero) return null
 
-
   return (
-    <section className="w-full bg-white border-b border-gray-300 py-6 sm:py-8">
-      <div className="max-w-[1280px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-
-          {/* AP Lead Top Story (8 cols) */}
-          <div className="lg:col-span-8">
-            <Link href={`/article/${hero.slug}`} className="group block">
-              <div className="relative w-full aspect-[16/10] overflow-hidden mb-4 bg-gray-100">
-                <ResponsiveImage
-                  media={hero.coverImage}
-                  alt={hero.coverImage?.alt || hero.title}
-                  sizes="(max-width: 1024px) 100vw, 66vw" priority
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
-                />
-                {hero.isBreaking && (
-                  <div className="absolute top-4 left-4">
-                    <BreakingBadge />
-                  </div>
-                )}
-              </div>
-
-              <h1 className="font-headline text-3xl sm:text-4xl lg:text-5xl leading-tight text-gray-900 mb-3 group-hover:underline">
-                {hero.title}
-              </h1>
-
-              <p className="text-base sm:text-lg text-gray-700 leading-relaxed font-serif-body mb-4 line-clamp-3">
-                {hero.excerpt}
-              </p>
-
-              <div className="flex items-center gap-3 text-xs font-mono uppercase text-gray-500">
-                <span>{hero.publishedAt ? formatDate(hero.publishedAt, 'MMM. d, yyyy') : 'TODAY'}</span>
-                {hero.readTime && <span>· {hero.readTime} min read</span>}
-                {hero.credit && <span className="text-[#d0021b] font-bold">· {hero.credit}</span>}
-              </div>
-            </Link>
+    <section className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-4 sm:pt-8 pb-8 grid grid-cols-1 lg:grid-cols-12 gap-x-10 gap-y-6">
+      <div className="lg:col-span-8">
+        <Link href={`/article/${hero.slug}`} className="group block">
+          <div className="-mx-4 sm:mx-0 aspect-[16/9] overflow-hidden sm:rounded-lg bg-gray-100">
+            <ResponsiveImage
+              media={hero.coverImage}
+              alt={hero.coverImage?.alt || hero.title}
+              sizes="(max-width: 1024px) 100vw, 760px"
+              priority
+              className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-500"
+            />
           </div>
+          <div className="mt-4">
+            {hero.isBreaking && (
+              <span className="inline-block mb-2 text-[11px] font-bold uppercase tracking-wider text-[#d0021b]">● Breaking</span>
+            )}
+            <h1 className="font-headline text-[28px] leading-[1.15] sm:text-4xl lg:text-[42px] lg:leading-[1.1] text-gray-950 text-balance group-hover:underline">
+              {hero.title}
+            </h1>
+            {hero.excerpt && (
+              <p className="mt-3 text-[17px] sm:text-lg leading-snug text-gray-600 line-clamp-3">{hero.excerpt}</p>
+            )}
+            {hero.publishedAt && (
+              <p className="mt-3 text-[13px] text-gray-500">
+                {formatDate(hero.publishedAt, 'MMM d, yyyy')}
+                {hero.readTime ? ` · ${hero.readTime} min read` : ''}
+              </p>
+            )}
+          </div>
+        </Link>
+      </div>
 
-          {/* AP Secondary Side Stories (4 cols) */}
-          <div className="lg:col-span-4 flex flex-col divide-y divide-gray-200 border-t lg:border-t-0 lg:border-l lg:border-gray-200 lg:pl-6">
-            <h3 className="label-caps mb-4 text-[#d0021b]">
-              TOP DEVELOPMENTS
-            </h3>
-
-            {secondary.slice(0, 4).map((article, i) => (
-              <div key={article.id} className="py-4 first:pt-0 last:pb-0">
-                <Link href={`/article/${article.slug}`} className="group flex gap-3 items-start">
-                  <div className="relative w-24 h-16 flex-shrink-0 bg-gray-100 overflow-hidden">
-                    <ResponsiveImage
-                      media={article.coverImage}
-                      alt={article.title}
-                      sizes="96px"
-                      maxWidth={768}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-card-title text-sm leading-snug text-gray-900 line-clamp-3 group-hover:underline">
-                      {article.title}
-                    </h4>
-                    <div className="font-mono text-[10px] text-gray-500 uppercase mt-1">
-                      {article.publishedAt ? formatDate(article.publishedAt, 'MMM. d') : 'TODAY'}
-                    </div>
-                  </div>
-                </Link>
-              </div>
+      {secondary.length > 0 && (
+        <aside className="lg:col-span-4 lg:border-l lg:border-gray-200 lg:pl-8" aria-labelledby="top-stories">
+          <SectionHeading id="top-stories">Top stories</SectionHeading>
+          <div className="divide-y divide-gray-200">
+            {secondary.slice(0, 4).map((article) => (
+              <ArticleCard key={article.id} article={article} size="sm" />
             ))}
           </div>
-
-        </div>
-      </div>
+        </aside>
+      )}
     </section>
   )
 }
