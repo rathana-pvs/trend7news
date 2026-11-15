@@ -8,7 +8,7 @@ const ts = require('typescript');
 function load(file, mocks = {}) {
   const filename = path.join(__dirname, '..', file);
   const source = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
-    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
     reportDiagnostics: true,
   });
   assert.equal(source.diagnostics.length, 0);
@@ -19,6 +19,49 @@ function load(file, mocks = {}) {
   }, { filename });
   return module.exports;
 }
+
+test('uploaded image URLs use the runtime file endpoint and preserve external hosts', () => {
+  const { normalizeImageUrl } = load('src/lib/image.ts');
+  for (const prefix of ['', 'https://trend7news.com', 'https://www.trend7news.com', 'http://2.25.107.30', 'http://localhost:3000']) {
+    assert.equal(normalizeImageUrl(`${prefix}/media/cover%20photo.jpg?v=2`), '/api/media/file/cover%20photo.jpg?v=2');
+    assert.equal(normalizeImageUrl(`${prefix}/api/media/file/cover.jpg`), '/api/media/file/cover.jpg');
+  }
+  for (const external of ['https://res.cloudinary.com/example/image/upload/cover.jpg',
+    'https://example.com/media/trend7news.com.jpg', 'https://trend7news.com.example.com/media/photo.jpg',
+    'data:image/png;base64,abc', '/favicon-32.png']) {
+    assert.equal(normalizeImageUrl(external), external);
+  }
+  assert.equal(normalizeImageUrl(null), undefined);
+});
+
+test('responsive images route the original and every generated size through Payload', () => {
+  const { getImageSources } = load('src/lib/image.ts');
+  const image = getImageSources({ url: '/media/cover.jpg', width: 1440, height: 810, sizes: {
+    thumbnail: { url: 'https://trend7news.com/media/cover-400x267.jpg', width: 400, height: 267 },
+    card: { url: '/api/media/file/cover-768x512.jpg', width: 768, height: 512 },
+  } });
+  assert.equal(image.src, '/api/media/file/cover-768x512.jpg');
+  assert.equal(image.srcSet, '/api/media/file/cover-400x267.jpg 400w, /api/media/file/cover-768x512.jpg 768w, /api/media/file/cover.jpg 1440w');
+});
+
+test('article and tracking metadata repair cached legacy cover URLs', async () => {
+  const image = load('src/lib/image.ts');
+  const article = { title: 'Uploaded story', slug: 'uploaded-story', excerpt: 'Summary',
+    coverImage: { url: '/media/cover.jpg' } };
+  const mocks = {
+    '@/lib/image': image,
+    '@/lib/api-server': { getArticle: async () => article, getTrackedArticle: async () => article },
+    '@/components/article/ArticleView': {},
+    'next/navigation': {},
+  };
+  for (const route of ['src/app/(frontend)/article/[slug]/page.tsx',
+    'src/app/(frontend)/article/[slug]/[title]/page.tsx']) {
+    const { generateMetadata } = load(route, mocks);
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: 'uploaded-story', title: 'uploaded-story' }) });
+    assert.equal(metadata.openGraph.images[0], '/api/media/file/cover.jpg');
+    assert.equal(metadata.twitter.images[0], '/api/media/file/cover.jpg');
+  }
+});
 function setup() {
   let user = { id: 7, role: 'editor' };
   const data = { articles: [], media: [], 'share-links': [], 'studio-publications': [], categories: [], authors: [] };

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getArticle, getArticles, getMostRead } from '@/lib/api-server'
 import { ArticleView } from '@/components/article/ArticleView'
+import { normalizeImageUrl } from '@/lib/image'
 
 interface PageProps {
   params: Promise<{ slug: string }>
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const title = article.meta?.title || article.title
   const description = article.meta?.description || article.excerpt
-  const ogImage = article.coverImage?.url // full-size original for Facebook link previews
+  const ogImage = normalizeImageUrl(article.coverImage?.url) // original for link previews, including cached legacy URLs
 
   return {
     title,

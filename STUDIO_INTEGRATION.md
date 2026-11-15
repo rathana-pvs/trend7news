@@ -65,6 +65,13 @@ The version 2 `http-json-v1` schema connector also works with this API, followin
 the existing news_website schema. Keep category empty. The included simple
 connection JSON is sufficient for normal use.
 
+Uploaded images render through `/api/media/file/<filename>`, including originals,
+responsive sizes, and social preview images. This endpoint reads uploads at
+request time, so new covers do not depend on Next.js's build-time public-file
+inventory. Existing `/media/` URLs are normalized when rendering. After deploying
+an image URL change, rebuild and restart the web application so cached pages can
+regenerate with the updated URLs.
+
 ## Tests
 
 Offline API, permission, retry, SEO, and public lookup checks:

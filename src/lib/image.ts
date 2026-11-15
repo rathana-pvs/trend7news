@@ -1,13 +1,23 @@
 import type { MediaItem } from '@/types'
 
-/** Rewrites Payload / legacy-host media URLs to the local /media path. */
+/** Serve uploaded files through Payload, including files created after a build. */
 export function normalizeImageUrl(url: string | undefined | null): string | undefined {
   if (!url) return undefined
-  if (url.includes('2.25.107.30') || url.includes('trend7news.com')) {
-    const filename = url.split('/').pop()
-    if (filename) return `/media/${filename}`
+  if (url.startsWith('/media/')) return `/api/media/file/${url.slice('/media/'.length)}`
+  if (url.startsWith('/api/media/file/')) return url
+
+  try {
+    const parsed = new URL(url, 'https://trend7news.com')
+    const localHosts = ['trend7news.com', 'www.trend7news.com', '2.25.107.30', 'localhost', '127.0.0.1']
+    if (localHosts.includes(parsed.hostname)) {
+      const path = parsed.pathname
+      if (path.startsWith('/media/') || path.startsWith('/api/media/file/')) {
+        return normalizeImageUrl(path + parsed.search + parsed.hash)
+      }
+    }
+  } catch {
+    // Keep external or unrecognized URLs unchanged.
   }
-  if (url.startsWith('/api/media/file/')) return `/media/${url.replace('/api/media/file/', '')}`
   return url
 }
 
