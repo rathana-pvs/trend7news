@@ -32,3 +32,6 @@ yarn-error.log*
 
 # Local website connector credentials
 /reel-studio-connection.json
+
+# Claude app local config
+/.claude/
