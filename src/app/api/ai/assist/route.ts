@@ -888,10 +888,37 @@ const googleAI = createGoogleGenerativeAI({
 })
 
 const PRIMARY_MODEL_ID = 'gemini-3.5-flash-lite'
-const FALLBACK_MODEL_ID = 'gemini-3.6-flash'
+// gemini-3.6-flash regularly hung >30s under load; the lite alias answers in ~1s.
+const FALLBACK_MODEL_ID = 'gemini-flash-lite-latest'
 
 const primaryModel = googleAI(PRIMARY_MODEL_ID)
 const fallbackModel = googleAI(FALLBACK_MODEL_ID)
+
+// Hard per-attempt cap so a hung or overloaded model can't stall imports forever.
+const AI_CALL_TIMEOUT_MS = 25_000
+
+async function generateWithFallback(prompt: string, label: string): Promise<string> {
+  try {
+    const res = await generateText({
+      model: primaryModel,
+      system: SYSTEM_PROMPT,
+      prompt,
+      maxRetries: 1,
+      abortSignal: AbortSignal.timeout(AI_CALL_TIMEOUT_MS),
+    })
+    return res.text
+  } catch (primaryErr: any) {
+    console.warn(`[${label}] Primary model (${PRIMARY_MODEL_ID}) failed, trying fallback (${FALLBACK_MODEL_ID}):`, primaryErr?.message)
+    const res = await generateText({
+      model: fallbackModel,
+      system: SYSTEM_PROMPT,
+      prompt,
+      maxRetries: 1,
+      abortSignal: AbortSignal.timeout(AI_CALL_TIMEOUT_MS),
+    })
+    return res.text
+  }
+}
 
 export async function GET(req: NextRequest) {
   const results: Record<string, { ok: boolean; response?: string; error?: string }> = {}
@@ -905,6 +932,8 @@ export async function GET(req: NextRequest) {
         model,
         prompt: 'Reply with exactly: OK',
         maxOutputTokens: 5,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(AI_CALL_TIMEOUT_MS),
       })
       results[name] = { ok: true, response: res.text.trim() }
     } catch (e: any) {
@@ -1031,23 +1060,7 @@ export async function POST(req: NextRequest) {
 
 Return valid JSON with exact keys: { "excerpt", "content", "tags", "metaTitle", "metaDescription" }`
 
-          let rawSummary = ''
-          try {
-            const res = await generateText({
-              model: primaryModel,
-              system: SYSTEM_PROMPT,
-              prompt: aiPrompt,
-            })
-            rawSummary = res.text
-          } catch (primErr) {
-            console.warn(`[Import Summary] Primary model (${PRIMARY_MODEL_ID}) failed, trying fallback (${FALLBACK_MODEL_ID}):`, primErr)
-            const res = await generateText({
-              model: fallbackModel,
-              system: SYSTEM_PROMPT,
-              prompt: aiPrompt,
-            })
-            rawSummary = res.text
-          }
+          const rawSummary = await generateWithFallback(aiPrompt, 'Import Summary')
 
           const aiData = safeJsonParse(rawSummary)
           if (aiData) {
@@ -1127,23 +1140,7 @@ Return JSON with exact keys: { "excerpt", "content" }`
 Return JSON with exact keys: { "excerpt", "tags", "metaTitle", "metaDescription" }`
     }
 
-    let rawText = ''
-    try {
-      const res = await generateText({
-        model: primaryModel,
-        system: SYSTEM_PROMPT,
-        prompt,
-      })
-      rawText = res.text
-    } catch (primaryErr: any) {
-      console.warn(`Primary AI model (${PRIMARY_MODEL_ID}) failed, trying fallback (${FALLBACK_MODEL_ID}):`, primaryErr?.message)
-      const res = await generateText({
-        model: fallbackModel,
-        system: SYSTEM_PROMPT,
-        prompt,
-      })
-      rawText = res.text
-    }
+    const rawText = await generateWithFallback(prompt, 'AI Assist')
 
     const aiData = safeJsonParse(rawText)
     if (!aiData) {
