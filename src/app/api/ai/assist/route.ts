@@ -955,11 +955,11 @@ For content summarization and AI formatting, follow these strict editorial rules
 1. Lead Excerpt / Summary: Create a punchy, high-engagement lead summary strictly under 160 characters. Do NOT include comment form text or website boilerplate.
 2. Title Handling: Do NOT duplicate the article title inside the main body content.
 3. Subheadings: Do NOT include any H2 or H3 subheadings in short summary articles—use clean, readable paragraphs.
-4. Total Word Count: The entire summary body content MUST be strictly between 120 and 140 words.
-5. Paragraph Constraints: Write EXACTLY 4 paragraphs (no more, no less). Each paragraph MUST be at most 35 words long.
+4. Total Word Count: The entire summary body content MUST be between 250 and 300 words.
+5. Paragraph Constraints: Write 5-6 paragraphs. Each paragraph MUST be at most 50 words long. Separate paragraphs with a blank line.
 6. Core Takeaways First (Lead-In): Put the main conclusion, event, or answer in the very first sentence (the "5 Ws": Who, What, When, Where, Why).
 7. Eliminate Fluff & Redundancies: Strip away unnecessary background details, conversational filler, repetitive examples, and minor anecdotes.
-8. Maintain Factual Accuracy: Preserve the original meaning and context without altering facts or adding unverified information.
+8. Maintain Factual Accuracy: Preserve the original meaning and context without altering facts or adding unverified information. If the source is too short to reach the word count, write fewer words rather than padding or inventing details.
 9. SEO Metadata Limits:
    - Meta Title: 50–60 characters (including - Trend7News suffix).
    - Meta Description: 100–150 characters.
@@ -1048,16 +1048,16 @@ export async function POST(req: NextRequest) {
           const rawParagraphsText = blocks
             .filter((b: any) => b.type === 'paragraph' && !isJunkText(b.text))
             .map((b: any) => b.text)
-            .slice(0, 15)
+            .slice(0, 30)
             .join('\n\n')
 
           const contentContext = rawParagraphsText.length > 20
-            ? rawParagraphsText.substring(0, 3000)
+            ? rawParagraphsText.substring(0, 6000)
             : (result.excerpt || result.title)
 
           const aiPrompt = `Given the news article title "${result.title}" and text content:\n"${contentContext}"\n\nSummarize and reformat into a complete news summary adhering strictly to these rules:
 1. "excerpt": A punchy, high-engagement lead summary strictly under 160 characters. Do NOT include comment form text or website boilerplate.
-2. "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be strictly between 120 and 140 words. Each paragraph MUST be at most 35 words long. Do NOT duplicate title.
+2. "content": Summary body of 5-6 paragraphs (no H2/H3 subheadings), separated by blank lines. Total word count MUST be between 250 and 300 words. Each paragraph MUST be at most 50 words long. Do NOT duplicate title.
 3. "tags": ["3-5 relevant lowercase tags"]
 4. "metaTitle": SEO title strictly 50-60 characters ending with - Trend7News.
 5. "metaDescription": SEO meta description strictly 100-150 characters.
@@ -1124,7 +1124,7 @@ Return valid JSON with exact keys: { "excerpt", "content", "tags", "metaTitle", 
       prompt = `Given the article title "${title || 'Untitled'}"${contextNotes ? ` and details:\n${contextNotes}` : ''}, generate a complete summary news article adhering to these rules:
 - "title": A polished, engaging title for the article (use given title if suitable or refine it).
 - "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
-- "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be between 120 and 140 words. Each paragraph MUST be at most 35 words long.
+- "content": Summary body of 5-6 paragraphs (no H2/H3 subheadings), separated by blank lines. Total word count MUST be between 250 and 300 words. Each paragraph MUST be at most 50 words long.
 - "tags": ["3-5 relevant lowercase tags"]
 - "metaTitle": SEO title strictly 50-60 characters ending with - Trend7News.
 - "metaDescription": SEO meta description strictly 100-150 characters.
@@ -1133,7 +1133,7 @@ Return JSON with exact keys: { "title", "excerpt", "content", "tags", "metaTitle
     } else if (action === 'content_only') {
       prompt = `Given the article title "${title || 'Untitled'}"${contextNotes ? ` and details:\n${contextNotes}` : ''}, generate the summary article content adhering to these rules:
 - "excerpt": A punchy, high-engagement lead summary strictly under 160 characters.
-- "content": Summary body of EXACTLY 4 short paragraphs (no H2/H3 subheadings). Total word count MUST be between 120 and 140 words. Each paragraph MUST be at most 35 words long.
+- "content": Summary body of 5-6 paragraphs (no H2/H3 subheadings), separated by blank lines. Total word count MUST be between 250 and 300 words. Each paragraph MUST be at most 50 words long.
 
 Return JSON with exact keys: { "excerpt", "content" }`
     } else if (action === 'seo_only') {
