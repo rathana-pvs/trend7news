@@ -897,14 +897,18 @@ const fallbackModel = googleAI(FALLBACK_MODEL_ID)
 // Hard per-attempt cap so a hung or overloaded model can't stall imports forever.
 const AI_CALL_TIMEOUT_MS = 25_000
 
-async function generateWithFallback(prompt: string, label: string): Promise<string> {
+async function generateWithFallback(
+  prompt: string,
+  label: string,
+  { timeoutMs = AI_CALL_TIMEOUT_MS, maxRetries = 1 }: { timeoutMs?: number; maxRetries?: number } = {},
+): Promise<string> {
   try {
     const res = await generateText({
       model: primaryModel,
       system: SYSTEM_PROMPT,
       prompt,
-      maxRetries: 1,
-      abortSignal: AbortSignal.timeout(AI_CALL_TIMEOUT_MS),
+      maxRetries,
+      abortSignal: AbortSignal.timeout(timeoutMs),
     })
     return res.text
   } catch (primaryErr: any) {
@@ -913,8 +917,8 @@ async function generateWithFallback(prompt: string, label: string): Promise<stri
       model: fallbackModel,
       system: SYSTEM_PROMPT,
       prompt,
-      maxRetries: 1,
-      abortSignal: AbortSignal.timeout(AI_CALL_TIMEOUT_MS),
+      maxRetries,
+      abortSignal: AbortSignal.timeout(timeoutMs),
     })
     return res.text
   }
@@ -1060,7 +1064,9 @@ export async function POST(req: NextRequest) {
 
 Return valid JSON with exact keys: { "excerpt", "content", "tags", "metaTitle", "metaDescription" }`
 
-          const rawSummary = await generateWithFallback(aiPrompt, 'Import Summary')
+          // Tight budget (≤ ~30s total): scraping + images already used time, and nginx
+          // cuts requests at 60s. On failure we fall back to the original scraped content.
+          const rawSummary = await generateWithFallback(aiPrompt, 'Import Summary', { timeoutMs: 15_000, maxRetries: 0 })
 
           const aiData = safeJsonParse(rawSummary)
           if (aiData) {
